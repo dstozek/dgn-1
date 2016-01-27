@@ -1,0 +1,31 @@
+set_global_assignment -name SDC_FILE cpu.sdc
+set_global_assignment -name TCL_FILE [file join $::quartus(ip_rootpath) University_Program/Audio_Video/altera_up_avalon_audio_and_video_config/Altera_UP_Avalon_Audio_and_Video_Config_hw.tcl]
+set_global_assignment -name VHDL_FILE [file join $::quartus(ip_rootpath) University_Program/Memory/altera_up_flash_memory/hdl/Altera_UP_Flash_Memory_IP_Core_Standalone.vhd]
+set_global_assignment -name TCL_FILE [file join $::quartus(ip_rootpath) University_Program/Audio_Video/Video_Out/altera_up_avalon_character_buffer/Altera_UP_Avalon_Character_Buffer_hw.tcl]
+set_global_assignment -name VHDL_FILE [file join $::quartus(ip_rootpath) University_Program/Memory/altera_up_flash_memory/hdl/Altera_UP_Flash_Memory_Controller.vhd]
+set_global_assignment -name TCL_FILE [file join $::quartus(ip_rootpath) University_Program/Memory/altera_up_avalon_sram/Altera_UP_Avalon_SRAM_hw.tcl]
+set_global_assignment -name SOURCE_FILE cpu.ocp
+set_global_assignment -name TCL_FILE [file join $::quartus(ip_rootpath) University_Program/Audio_Video/Video_Out/altera_up_avalon_alpha_blending/Altera_UP_Avalon_Alpha_Blending_hw.tcl]
+set_global_assignment -name VERILOG_FILE vga.v
+ set_global_assignment -name VHDL_FILE analyzer_input.vhd
+set_global_assignment -name TCL_FILE [file join $::quartus(ip_rootpath) University_Program/Audio_Video/Video_Out/altera_up_avalon_vga/Altera_UP_Avalon_VGA_hw.tcl]
+set_global_assignment -name TCL_FILE audio/membuffer_hw.tcl
+set_global_assignment -name TCL_FILE [file join $::quartus(ip_rootpath) University_Program/Audio_Video/Video_Out/altera_up_avalon_pixel_buffer/Altera_UP_Avalon_Pixel_Buffer_hw.tcl]
+set_global_assignment -name VERILOG_FILE character_buffer.v
+ set_global_assignment -name VHDL_FILE analyzer_input_right.vhd
+set_global_assignment -name VHDL_FILE audio/membuffer.vhd
+set_global_assignment -name VERILOG_FILE sram.v
+ set_global_assignment -name VERILOG_FILE pixel_buffer.v
+ set_global_assignment -name TCL_FILE [file join $::quartus(ip_rootpath) University_Program/Input_Output/altera_up_avalon_ps2/Altera_UP_Avalon_PS2_hw.tcl]
+set_global_assignment -name VERILOG_FILE ps2.v
+ set_global_assignment -name VHDL_FILE membuffer_0.vhd
+set_global_assignment -name VHDL_FILE Altera_UP_Flash_Memory_IP_Core_Avalon_Interface_0.vhd
+set_global_assignment -name VERILOG_FILE audio_and_video_config_0.v
+ set_global_assignment -name TCL_FILE [file join $::quartus(ip_rootpath) University_Program/Memory/altera_up_flash_memory/Altera_UP_Flash_Memory_IP_Core_Avalon_Interface_hw.tcl]
+set_global_assignment -name VHDL_FILE analyzer_input_left.vhd
+set_global_assignment -name VERILOG_FILE alpha_blending.v
+ set_global_assignment -name TCL_FILE analyzer_input_hw.tcl
+set_global_assignment -name VHDL_FILE [file join $::quartus(ip_rootpath) University_Program/Memory/altera_up_flash_memory/hdl/Altera_UP_Flash_Memory_User_Interface.vhd]
+set_global_assignment -name VHDL_FILE [file join $::quartus(ip_rootpath) University_Program/Memory/altera_up_flash_memory/hdl/Altera_UP_Flash_Memory_IP_Core_Avalon_Interface.vhd]
+set_global_assignment -name SOPC_BUILDER_SIGNATURE_ID 00000000000000E000000128F3141491 
+ 

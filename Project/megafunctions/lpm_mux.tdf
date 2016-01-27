@@ -1,0 +1,231 @@
+--------------------------------------------------------------------
+--
+--	LPM_MUX Parameterized Megafunction
+--
+--  Copyright 1991-2010 Corporation  
+--  Your use of Altera Corporation's design tools, logic functions  
+--  and other software and tools, and its AMPP partner logic  
+--  functions, and any output files from any of the foregoing  
+--  (including device programming or simulation files), and any  
+--  associated documentation or information are expressly subject  
+--  to the terms and conditions of the Altera Program License  
+--  Subscription Agreement, Altera MegaCore Function License  
+--  Agreement, or other applicable license agreement, including,  
+--  without limitation, that your use is for the sole purpose of  
+--  programming logic devices manufactured by Altera and sold by  
+--  Altera or its authorized distributors.  Please refer to the  
+--  applicable agreement for further details. 
+--  
+--  9.1 Build 350  10/07/2009   
+--
+--	Version 3.0
+--
+--------------------------------------------------------------------
+----------------------------------
+-- Top level design for LPM_MUX	--
+----------------------------------
+OPTIONS NAME_SUBSTITUTION = ON;
+
+include "aglobal91.inc";
+INCLUDE "muxlut.inc";
+INCLUDE "bypassff.inc";
+INCLUDE "altshift.inc";
+
+PARAMETERS
+(
+	LPM_WIDTH,							-- Number of result bits
+	LPM_SIZE,							-- Number of input buses
+	LPM_WIDTHS = CEIL(LOG2(LPM_SIZE)),	-- Number of select inputs
+	LPM_PIPELINE = 0,					-- Latency of mux pipe
+	CBXI_PARAMETER = "NOTHING",
+	DEVICE_FAMILY
+);
+
+FUNCTION @CBXI_PARAMETER (aclr, clken, clock, data[LPM_SIZE*LPM_WIDTH-1..0], sel[LPM_WIDTHS-1..0])
+RETURNS (result[LPM_WIDTH-1..0]);
+
+
+-- Determine the useful number of select inputs.
+CONSTANT U_WIDTHS = (LPM_SIZE == 1) ? 0 : CEIL(LOG2(LPM_SIZE));
+
+-- Determine the height of the multiplexer tree
+DEFINE   HEIGHT(n)	 = (n <= 4) ? 1 : CEIL(CEIL(LOG2(n)) DIV 2); 
+CONSTANT TOT_LEVELS  = HEIGHT(LPM_SIZE);
+
+-- Determine th number of select inputs to each level of the tree. This will
+-- be needed for pipelining of select inputs.
+DEFINE SEL_NUM(n) = (U_WIDTHS MOD 2 == 0) ? 2 : (n != (TOT_LEVELS-1) ? 2 : 1 );
+DEFINE TOT_SEL(n) = (n == 0) ? SEL_NUM(0) : (TOT_SEL(n-1) + SEL_NUM(n));
+
+-- Latency-related functions and parameters
+DEFINE MIN(a, b)     = (a < b) ? a : b;
+CONSTANT LATENCY     = LPM_PIPELINE;	-- Will call LPM_PIPELINE LATENCY ...
+CONSTANT INT_LATENCY = MIN(LATENCY, (TOT_LEVELS-1));	
+CONSTANT EXT_LATENCY = (LATENCY > INT_LATENCY) ? (LATENCY - INT_LATENCY) : 0;
+
+DEFINE MOD_DIST(n, d)	 = ((2 * n) > d ? d - n : n);
+DEFINE LATENCY_MOD(k)	 = (!((k * (INT_LATENCY + 1)) MOD TOT_LEVELS)) ? TOT_LEVELS : 
+							((k * (INT_LATENCY + 1)) MOD TOT_LEVELS);
+DEFINE NEED_CLK(LEVEL)	 = -((LEVEL == TOT_LEVELS-1) ? 0 : 
+							((LATENCY_MOD(LEVEL+1) == TOT_LEVELS) # 
+						    ((LATENCY_MOD(LEVEL+1) > LATENCY_MOD(LEVEL+2)))));
+
+
+SUBDESIGN lpm_mux
+(
+	data[LPM_SIZE-1..0][LPM_WIDTH-1..0]	: INPUT = GND;
+	sel[LPM_WIDTHS-1..0]				: INPUT = GND;
+	clock, aclr							: INPUT = GND;
+	clken								: INPUT = VCC;
+	result[LPM_WIDTH-1..0]				: OUTPUT;
+)
+
+
+VARIABLE
+	IF (FAMILY_STRATIX() == 1 # FAMILY_STRATIXII() == 1 # FAMILY_MERCURY() == 1) & CBXI_PARAMETER != "NOTHING" GENERATE
+		auto_generated : @CBXI_PARAMETER WITH ( CBXI_PARAMETER = "NOTHING" );
+	ELSE GENERATE
+
+	IF TOT_LEVELS > 1 GENERATE
+		sel_latency_ff[TOT_LEVELS-2..0]		: bypassff WITH (WIDTH = U_WIDTHS);
+	END GENERATE;
+
+	sel_node[U_WIDTHS-1..0]				: NODE;
+	result_node[LPM_WIDTH-1..0]				: NODE;
+
+	external_latency_ffs					: altshift WITH (WIDTH = LPM_WIDTH, 
+													 		 DEPTH = EXT_LATENCY);
+	END GENERATE;
+BEGIN
+
+	ASSERT (LPM_WIDTH > 0)
+			REPORT "Value of LPM_WIDTH parameter must be greater than 0"
+			SEVERITY ERROR
+			HELP_ID LPM_MUX_WIDTH;
+
+	ASSERT (LPM_SIZE > 1)
+			REPORT "Value of LPM_SIZE parameter must be greater than 1"
+			SEVERITY ERROR
+			HELP_ID LPM_MUX_SIZE;
+
+	ASSERT (LPM_WIDTHS > 0)
+			REPORT "Value of LPM_WIDTHS parameter must be greater than 0"
+			SEVERITY ERROR
+			HELP_ID LPM_MUX_WIDTHS;
+
+	ASSERT (LPM_SIZE <= 2^LPM_WIDTHS) -- Must have enough select inputs
+			REPORT "Too few select inputs for the requested multiplexer size of %"
+				LPM_SIZE
+			SEVERITY ERROR
+			HELP_ID LPM_MUX_SELECT;
+
+	ASSERT (USED(clock) ? LATENCY > 0 : LATENCY == 0)
+			REPORT "Value of LPM_PIPELINE parameter must be greater than 0 if clock input is used and vice versa"
+			SEVERITY ERROR
+			HELP_ID LPM_MUX_CLOCK_WITHOUT_LATENCY;
+
+	ASSERT (EXT_LATENCY <= 1 # TOT_LEVELS == 1)
+			REPORT "Value of LPM_PIPELINE parameter (%) should be lower -- use % for best performance/utilization" LATENCY, INT_LATENCY
+			SEVERITY INFO
+			HELP_ID LPM_MUX_CLOCK_LATENCY_VALUE;
+
+	ASSERT (LPM_WIDTHS == U_WIDTHS)  -- Have more select inputs than needed
+			REPORT "More select lines than neccessary have been specified. % MSB bit(s) of sel port will be discarded." LPM_WIDTHS - U_WIDTHS
+			SEVERITY WARNING
+			HELP_ID LPM_MUX_MORE_SELECT;
+	IF (FAMILY_STRATIX() == 1 # FAMILY_STRATIXII() == 1 # FAMILY_MERCURY() == 1) & CBXI_PARAMETER != "NOTHING" GENERATE
+		IF USED(aclr) GENERATE
+			auto_generated.aclr = aclr;
+		END GENERATE;
+		IF USED(clken) GENERATE
+			auto_generated.clken = clken;
+		END GENERATE;
+		IF USED(clock) GENERATE
+			auto_generated.clock = clock;
+		END GENERATE;
+		IF USED(data) GENERATE
+			auto_generated.data[] = data[][];
+		END GENERATE;
+		IF USED(result) GENERATE
+			result[] = auto_generated.result[];
+		END GENERATE;
+		IF USED(sel) GENERATE
+			auto_generated.sel[] = sel[];
+		END GENERATE;
+ 	ELSE GENERATE
+	-- Connect the select inputs for 0th (input side) level of MUX to sel_node
+	sel_node[TOT_SEL(0)-1..0] = sel[TOT_SEL(0)-1..0];
+
+	-- If more than one level, then connect the select inputs for the remaining levels to
+	-- the output of select pipe stages.
+	IF TOT_LEVELS > 1 GENERATE
+		sel_latency_ff[0].d[] = sel[U_WIDTHS-1..0];
+		IF TOT_LEVELS > 2 GENERATE
+			sel_latency_ff[TOT_LEVELS-2..1].d[] = sel_latency_ff[TOT_LEVELS-3..0].q[];
+		END GENERATE;
+
+		FOR I IN 1 TO TOT_LEVELS-1 GENERATE
+			sel_node[TOT_SEL(I)-1..TOT_SEL(I-1)] = sel_latency_ff[I-1].q[TOT_SEL(I)-1..TOT_SEL(I-1)];
+		END GENERATE;
+
+		-- Connect the clock to select lines pipe if and when needed.
+		FOR I IN 0 TO TOT_LEVELS-2 GENERATE
+			IF USED(clock) & LATENCY > 0 & NEED_CLK(I) GENERATE
+				ASSERT REPORT "sel-latency % needs clock" I SEVERITY DEBUG;
+				sel_latency_ff[I].(clk, clrn) = (clock, !aclr);
+
+				IF USED(clken) GENERATE
+					sel_latency_ff[I].ena = clken;
+				END GENERATE;
+			END GENERATE;
+		END GENERATE;
+	END GENERATE;
+
+	-- Generate each bit of output.
+	FOR w IN 0 TO LPM_WIDTH-1 GENERATE
+		IF USED(clock) & LATENCY > 0 GENERATE
+			IF USED(clken) GENERATE
+				result_node[w] = muxlut(.data[] = data[][w],
+										.select[] = sel_node[U_WIDTHS-1..0],
+									    .clock = clock, .aclr = aclr, .clken = clken) 
+										WITH (SIZE = LPM_SIZE,
+										   	  LEVEL = TOT_LEVELS-1,
+											  TOT_LEVELS = TOT_LEVELS,
+									 		  LATENCY = INT_LATENCY)
+										RETURNS (.result);
+			ELSE GENERATE
+				result_node[w] = muxlut(.data[] = data[][w], 
+										.select[] = sel_node[U_WIDTHS-1..0], 
+									    .clock = clock, .aclr = aclr) 
+										WITH (SIZE = LPM_SIZE,
+										   	  LEVEL = TOT_LEVELS-1,
+											  TOT_LEVELS = TOT_LEVELS,
+									 		  LATENCY = INT_LATENCY)
+										RETURNS (.result);
+			END GENERATE;
+		ELSE GENERATE
+			result_node[w] = muxlut(.data[] = data[][w], 
+									.select[] = sel_node[U_WIDTHS-1..0]) 
+							  		WITH (SIZE = LPM_SIZE,
+										  LEVEL = TOT_LEVELS-1,
+										  TOT_LEVELS = TOT_LEVELS,
+										  LATENCY = INT_LATENCY)
+									RETURNS (.result); 
+		END GENERATE;
+ 	END GENERATE;
+
+	-- External latency connections
+	external_latency_ffs.data[] = result_node[];
+	result[] = external_latency_ffs.result[];
+	
+	IF EXT_LATENCY > 0 GENERATE
+		external_latency_ffs.(clock, aclr) = (clock, aclr);
+		IF USED(clken) GENERATE
+			external_latency_ffs.clken = clken;		
+		END GENERATE;
+	END GENERATE;
+	END GENERATE; -- CBXI
+	IF !USED(result) GENERATE
+		result[] = GND;
+	END GENERATE;
+END;

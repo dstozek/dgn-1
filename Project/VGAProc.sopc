@@ -1,0 +1,2076 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<system name="VGAProc">
+ <parameter name="bonusData"><![CDATA[bonusData 
+{
+   element Altera_UP_Flash_Memory_IP_Core_Avalon_Interface_0
+   {
+      datum _sortIndex
+      {
+         value = "10";
+         type = "int";
+      }
+   }
+   element VGAProc
+   {
+   }
+   element alpha_blending
+   {
+      datum _sortIndex
+      {
+         value = "6";
+         type = "int";
+      }
+   }
+   element analyzer_input_left
+   {
+      datum _sortIndex
+      {
+         value = "41";
+         type = "int";
+      }
+   }
+   element analyzer_input_right
+   {
+      datum _sortIndex
+      {
+         value = "42";
+         type = "int";
+      }
+   }
+   element audio_and_video_config_0
+   {
+      datum _sortIndex
+      {
+         value = "12";
+         type = "int";
+      }
+   }
+   element character_buffer.avalon_char_buffer_slave
+   {
+      datum baseAddress
+      {
+         value = "13631488";
+         type = "long";
+      }
+   }
+   element character_buffer.avalon_char_control_slave
+   {
+      datum baseAddress
+      {
+         value = "13644256";
+         type = "long";
+      }
+   }
+   element jtag_uart.avalon_jtag_slave
+   {
+      datum baseAddress
+      {
+         value = "13644264";
+         type = "long";
+      }
+   }
+   element audio_and_video_config_0.avalon_on_board_config_slave
+   {
+      datum baseAddress
+      {
+         value = "13643776";
+         type = "long";
+      }
+   }
+   element pixel_buffer.avalon_pixel_buffer_slave
+   {
+      datum baseAddress
+      {
+         value = "13643808";
+         type = "long";
+      }
+   }
+   element ps2.avalon_ps2_slave
+   {
+      datum baseAddress
+      {
+         value = "13644272";
+         type = "long";
+      }
+   }
+   element analyzer_input_right.avalon_slave
+   {
+      datum baseAddress
+      {
+         value = "13644208";
+         type = "long";
+      }
+   }
+   element analyzer_input_left.avalon_slave
+   {
+      datum baseAddress
+      {
+         value = "13644176";
+         type = "long";
+      }
+   }
+   element sram.avalon_sram_slave
+   {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
+      datum baseAddress
+      {
+         value = "13107200";
+         type = "long";
+      }
+   }
+   element character_buffer
+   {
+      datum _sortIndex
+      {
+         value = "4";
+         type = "int";
+      }
+   }
+   element clk_0
+   {
+      datum _sortIndex
+      {
+         value = "9";
+         type = "int";
+      }
+   }
+   element cpu
+   {
+      datum _sortIndex
+      {
+         value = "1";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{}";
+         type = "String";
+      }
+   }
+   element cpu_fpoint
+   {
+      datum _sortIndex
+      {
+         value = "40";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=C:\\Data\\Proyektz\\Tidied\\IFE\\Sem6\\DGH1}";
+         type = "String";
+      }
+   }
+   element Altera_UP_Flash_Memory_IP_Core_Avalon_Interface_0.flash_data
+   {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
+      datum baseAddress
+      {
+         value = "8388608";
+         type = "long";
+      }
+   }
+   element Altera_UP_Flash_Memory_IP_Core_Avalon_Interface_0.flash_erase_control
+   {
+      datum baseAddress
+      {
+         value = "13644280";
+         type = "long";
+      }
+   }
+   element cpu.jtag_debug_module
+   {
+      datum baseAddress
+      {
+         value = "13641728";
+         type = "long";
+      }
+   }
+   element jtag_uart
+   {
+      datum _sortIndex
+      {
+         value = "8";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{}";
+         type = "String";
+      }
+   }
+   element membuffer_0
+   {
+      datum _sortIndex
+      {
+         value = "2";
+         type = "int";
+      }
+   }
+   element pio_bitcrusher_bypass
+   {
+      datum _sortIndex
+      {
+         value = "25";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=C:\\Data\\Proyektz\\Tidied\\IFE\\Sem6\\DGH1}";
+         type = "String";
+      }
+   }
+   element pio_bitcrusher_crush
+   {
+      datum _sortIndex
+      {
+         value = "26";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=C:\\Data\\Proyektz\\Tidied\\IFE\\Sem6\\DGH1}";
+         type = "String";
+      }
+   }
+   element pio_bitcrusher_downsample
+   {
+      datum _sortIndex
+      {
+         value = "27";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=C:\\Data\\Proyektz\\Tidied\\IFE\\Sem6\\DGH1}";
+         type = "String";
+      }
+   }
+   element pio_bitcrusher_drywet
+   {
+      datum _sortIndex
+      {
+         value = "28";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{}";
+         type = "String";
+      }
+   }
+   element pio_bitcrusher_flavor
+   {
+      datum _sortIndex
+      {
+         value = "30";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{}";
+         type = "String";
+      }
+   }
+   element pio_bitcrusher_tone
+   {
+      datum _sortIndex
+      {
+         value = "29";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=C:\\Data\\Proyektz\\Tidied\\IFE\\Sem6\\DGH1}";
+         type = "String";
+      }
+   }
+   element pio_compressor_bypass
+   {
+      datum _sortIndex
+      {
+         value = "24";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=C:\\Data\\Proyektz\\Tidied\\IFE\\Sem6\\DGH1}";
+         type = "String";
+      }
+   }
+   element pio_compressor_gain
+   {
+      datum _sortIndex
+      {
+         value = "22";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=C:\\Data\\Proyektz\\Tidied\\IFE\\Sem6\\DGH1}";
+         type = "String";
+      }
+   }
+   element pio_compressor_treshold
+   {
+      datum _sortIndex
+      {
+         value = "23";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=C:\\Data\\Proyektz\\Tidied\\IFE\\Sem6\\DGH1}";
+         type = "String";
+      }
+   }
+   element pio_delay_bypass
+   {
+      datum _sortIndex
+      {
+         value = "18";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=C:\\Data\\Proyektz\\Tidied\\IFE\\Sem6\\DGH1}";
+         type = "String";
+      }
+   }
+   element pio_delay_decay
+   {
+      datum _sortIndex
+      {
+         value = "17";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=C:\\Data\\Proyektz\\Tidied\\IFE\\Sem6\\DGH1}";
+         type = "String";
+      }
+   }
+   element pio_delay_length
+   {
+      datum _sortIndex
+      {
+         value = "13";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=C:\\Data\\Proyektz\\Tidied\\IFE\\Sem6\\DGH1}";
+         type = "String";
+      }
+   }
+   element pio_master_volume
+   {
+      datum _sortIndex
+      {
+         value = "21";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=C:\\Data\\Proyektz\\Tidied\\IFE\\Sem6\\DGH1}";
+         type = "String";
+      }
+   }
+   element pio_octaver_bypass
+   {
+      datum _sortIndex
+      {
+         value = "36";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{}";
+         type = "String";
+      }
+   }
+   element pio_octaver_dry_wet
+   {
+      datum _sortIndex
+      {
+         value = "37";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{}";
+         type = "String";
+      }
+   }
+   element pio_output_power_left
+   {
+      datum _sortIndex
+      {
+         value = "38";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=C:\\Data\\Proyektz\\Tidied\\IFE\\Sem6\\DGH1}";
+         type = "String";
+      }
+   }
+   element pio_output_power_right
+   {
+      datum _sortIndex
+      {
+         value = "39";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=C:\\Data\\Proyektz\\Tidied\\IFE\\Sem6\\DGN1-Package-2\\Project}";
+         type = "String";
+      }
+   }
+   element pio_overdrive_asymmetric
+   {
+      datum _sortIndex
+      {
+         value = "20";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=C:\\Data\\Proyektz\\Tidied\\IFE\\Sem6\\DGH1}";
+         type = "String";
+      }
+   }
+   element pio_overdrive_bypass
+   {
+      datum _sortIndex
+      {
+         value = "19";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=C:\\Data\\Proyektz\\Tidied\\IFE\\Sem6\\DGH1}";
+         type = "String";
+      }
+   }
+   element pio_overdrive_gain
+   {
+      datum _sortIndex
+      {
+         value = "14";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=C:\\Data\\Proyektz\\Tidied\\IFE\\Sem6\\DGH1}";
+         type = "String";
+      }
+   }
+   element pio_overdrive_tone
+   {
+      datum _sortIndex
+      {
+         value = "16";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=C:\\Data\\Proyektz\\Tidied\\IFE\\Sem6\\DGH1}";
+         type = "String";
+      }
+   }
+   element pio_overdrive_volume
+   {
+      datum _sortIndex
+      {
+         value = "15";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=C:\\Data\\Proyektz\\Tidied\\IFE\\Sem6\\DGH1}";
+         type = "String";
+      }
+   }
+   element pio_tremolo_stereo_bypass
+   {
+      datum _sortIndex
+      {
+         value = "31";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{}";
+         type = "String";
+      }
+   }
+   element pio_tremolo_stereo_depth
+   {
+      datum _sortIndex
+      {
+         value = "32";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=E:\\vhdl\\dgh_a}";
+         type = "String";
+      }
+   }
+   element pio_tremolo_stereo_mode
+   {
+      datum _sortIndex
+      {
+         value = "35";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=E:\\vhdl\\dgh_a}";
+         type = "String";
+      }
+   }
+   element pio_tremolo_stereo_sweep_a
+   {
+      datum _sortIndex
+      {
+         value = "33";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=C:\\Data\\Proyektz\\Tidied\\IFE\\Sem6\\DGN1-Package-2\\Project}";
+         type = "String";
+      }
+   }
+   element pio_tremolo_stereo_sweep_b
+   {
+      datum _sortIndex
+      {
+         value = "34";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=E:\\vhdl\\dgh_a}";
+         type = "String";
+      }
+   }
+   element pixel_buffer
+   {
+      datum _sortIndex
+      {
+         value = "5";
+         type = "int";
+      }
+   }
+   element ps2
+   {
+      datum _sortIndex
+      {
+         value = "11";
+         type = "int";
+      }
+   }
+   element pio_master_volume.s1
+   {
+      datum baseAddress
+      {
+         value = "13643936";
+         type = "long";
+      }
+   }
+   element pio_delay_length.s1
+   {
+      datum baseAddress
+      {
+         value = "13643952";
+         type = "long";
+      }
+   }
+   element pio_overdrive_gain.s1
+   {
+      datum baseAddress
+      {
+         value = "13643920";
+         type = "long";
+      }
+   }
+   element pio_bitcrusher_bypass.s1
+   {
+      datum baseAddress
+      {
+         value = "13644016";
+         type = "long";
+      }
+   }
+   element sdram.s1
+   {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
+      datum baseAddress
+      {
+         value = "0";
+         type = "long";
+      }
+   }
+   element pio_bitcrusher_tone.s1
+   {
+      datum baseAddress
+      {
+         value = "13644224";
+         type = "long";
+      }
+   }
+   element pio_tremolo_stereo_sweep_b.s1
+   {
+      datum baseAddress
+      {
+         value = "12582912";
+         type = "long";
+      }
+   }
+   element pio_output_power_left.s1
+   {
+      datum baseAddress
+      {
+         value = "13644160";
+         type = "long";
+      }
+   }
+   element pio_overdrive_tone.s1
+   {
+      datum baseAddress
+      {
+         value = "13643840";
+         type = "long";
+      }
+   }
+   element pio_output_power_right.s1
+   {
+      datum baseAddress
+      {
+         value = "13644192";
+         type = "long";
+      }
+   }
+   element pio_bitcrusher_downsample.s1
+   {
+      datum baseAddress
+      {
+         value = "13644048";
+         type = "long";
+      }
+   }
+   element pio_delay_bypass.s1
+   {
+      datum baseAddress
+      {
+         value = "13643856";
+         type = "long";
+      }
+   }
+   element pio_tremolo_stereo_sweep_a.s1
+   {
+      datum baseAddress
+      {
+         value = "13644112";
+         type = "long";
+      }
+   }
+   element pio_overdrive_asymmetric.s1
+   {
+      datum baseAddress
+      {
+         value = "13643888";
+         type = "long";
+      }
+   }
+   element pio_tremolo_stereo_depth.s1
+   {
+      datum baseAddress
+      {
+         value = "13644096";
+         type = "long";
+      }
+   }
+   element pio_overdrive_volume.s1
+   {
+      datum baseAddress
+      {
+         value = "13643824";
+         type = "long";
+      }
+   }
+   element pio_overdrive_bypass.s1
+   {
+      datum baseAddress
+      {
+         value = "13643872";
+         type = "long";
+      }
+   }
+   element pio_compressor_treshold.s1
+   {
+      datum baseAddress
+      {
+         value = "13643984";
+         type = "long";
+      }
+   }
+   element pio_bitcrusher_drywet.s1
+   {
+      datum baseAddress
+      {
+         value = "13644064";
+         type = "long";
+      }
+   }
+   element pio_bitcrusher_flavor.s1
+   {
+      datum baseAddress
+      {
+         value = "13644240";
+         type = "long";
+      }
+   }
+   element pio_delay_decay.s1
+   {
+      datum baseAddress
+      {
+         value = "13643904";
+         type = "long";
+      }
+   }
+   element pio_octaver_dry_wet.s1
+   {
+      datum baseAddress
+      {
+         value = "13644144";
+         type = "long";
+      }
+   }
+   element pio_tremolo_stereo_mode.s1
+   {
+      datum baseAddress
+      {
+         value = "12582928";
+         type = "long";
+      }
+   }
+   element pio_octaver_bypass.s1
+   {
+      datum baseAddress
+      {
+         value = "13644128";
+         type = "long";
+      }
+   }
+   element pio_compressor_gain.s1
+   {
+      datum baseAddress
+      {
+         value = "13643968";
+         type = "long";
+      }
+   }
+   element pio_compressor_bypass.s1
+   {
+      datum baseAddress
+      {
+         value = "13644000";
+         type = "long";
+      }
+   }
+   element pio_bitcrusher_crush.s1
+   {
+      datum baseAddress
+      {
+         value = "13644032";
+         type = "long";
+      }
+   }
+   element pio_tremolo_stereo_bypass.s1
+   {
+      datum baseAddress
+      {
+         value = "13644080";
+         type = "long";
+      }
+   }
+   element sdram
+   {
+      datum _sortIndex
+      {
+         value = "3";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{output_language=VHDL, output_directory=C:\\Data\\Proyektz\\Tidied\\IFE\\Sem6\\FPGA\\VGA-Handling}";
+         type = "String";
+      }
+   }
+   element sram
+   {
+      datum _sortIndex
+      {
+         value = "0";
+         type = "int";
+      }
+   }
+   element vga
+   {
+      datum _sortIndex
+      {
+         value = "7";
+         type = "int";
+      }
+   }
+}
+]]></parameter>
+ <parameter name="deviceFamily" value="CYCLONEII" />
+ <parameter name="generateLegacySim" value="false" />
+ <parameter name="hardcopyCompatible" value="false" />
+ <parameter name="hdlLanguage" value="VHDL" />
+ <parameter name="projectName" value="DGN-1.qpf" />
+ <parameter name="systemHash" value="44875931120" />
+ <parameter name="timeStamp" value="1278689248053" />
+ <module name="clk_0" kind="clock_source" version="9.1" enabled="1">
+  <parameter name="clockFrequency" value="50000000" />
+  <parameter name="clockFrequencyKnown" value="true" />
+ </module>
+ <module name="cpu" kind="altera_nios2" version="9.1" enabled="1">
+  <parameter name="userDefinedSettings" value="" />
+  <parameter name="setting_showUnpublishedSettings" value="false" />
+  <parameter name="setting_showInternalSettings" value="false" />
+  <parameter name="setting_shadowRegisterSets" value="0" />
+  <parameter name="setting_preciseSlaveAccessErrorException" value="false" />
+  <parameter name="setting_preciseIllegalMemAccessException" value="false" />
+  <parameter name="setting_preciseDivisionErrorException" value="false" />
+  <parameter name="setting_performanceCounter" value="false" />
+  <parameter name="setting_perfCounterWidth" value="_32" />
+  <parameter name="setting_interruptControllerType" value="Internal" />
+  <parameter name="setting_illegalMemAccessDetection" value="false" />
+  <parameter name="setting_illegalInstructionsTrap" value="false" />
+  <parameter name="setting_fullWaveformSignals" value="false" />
+  <parameter name="setting_extraExceptionInfo" value="false" />
+  <parameter name="setting_exportPCB" value="false" />
+  <parameter name="setting_debugSimGen" value="false" />
+  <parameter name="setting_clearXBitsLDNonBypass" value="true" />
+  <parameter name="setting_branchPredictionType" value="Automatic" />
+  <parameter name="setting_bit31BypassDCache" value="true" />
+  <parameter name="setting_bigEndian" value="false" />
+  <parameter name="setting_bhtPtrSz" value="_8" />
+  <parameter name="setting_bhtIndexPcOnly" value="false" />
+  <parameter name="setting_avalonDebugPortPresent" value="false" />
+  <parameter name="setting_alwaysEncrypt" value="true" />
+  <parameter name="setting_allowFullAddressRange" value="false" />
+  <parameter name="setting_activateTrace" value="true" />
+  <parameter name="setting_activateTestEndChecker" value="false" />
+  <parameter name="setting_activateMonitors" value="true" />
+  <parameter name="setting_activateModelChecker" value="false" />
+  <parameter name="setting_HDLSimCachesCleared" value="true" />
+  <parameter name="setting_HBreakTest" value="false" />
+  <parameter name="resetSlave">sram.avalon_sram_slave</parameter>
+  <parameter name="resetOffset" value="0" />
+  <parameter name="muldiv_multiplierType" value="EmbeddedMulFast" />
+  <parameter name="muldiv_divider" value="false" />
+  <parameter name="mpu_useLimit" value="true" />
+  <parameter name="mpu_numOfInstRegion" value="8" />
+  <parameter name="mpu_numOfDataRegion" value="12" />
+  <parameter name="mpu_minInstRegionSize" value="_12" />
+  <parameter name="mpu_minDataRegionSize" value="_12" />
+  <parameter name="mpu_enabled" value="false" />
+  <parameter name="mmu_uitlbNumEntries" value="_4" />
+  <parameter name="mmu_udtlbNumEntries" value="_6" />
+  <parameter name="mmu_tlbPtrSz" value="_7" />
+  <parameter name="mmu_tlbNumWays" value="_16" />
+  <parameter name="mmu_processIDNumBits" value="_8" />
+  <parameter name="mmu_enabled" value="false" />
+  <parameter name="mmu_autoAssignTlbPtrSz" value="true" />
+  <parameter name="mmu_TLBMissExcSlave" value="" />
+  <parameter name="mmu_TLBMissExcOffset" value="0" />
+  <parameter name="manuallyAssignCpuID" value="false" />
+  <parameter name="impl" value="Fast" />
+  <parameter name="icache_size" value="_4096" />
+  <parameter name="icache_ramBlockType" value="Automatic" />
+  <parameter name="icache_numTCIM" value="_0" />
+  <parameter name="icache_burstType" value="None" />
+  <parameter name="exceptionSlave">sram.avalon_sram_slave</parameter>
+  <parameter name="exceptionOffset" value="32" />
+  <parameter name="debug_triggerArming" value="true" />
+  <parameter name="debug_level" value="Level1" />
+  <parameter name="debug_jtagInstanceID" value="0" />
+  <parameter name="debug_embeddedPLL" value="true" />
+  <parameter name="debug_debugReqSignals" value="false" />
+  <parameter name="debug_assignJtagInstanceID" value="false" />
+  <parameter name="debug_OCIOnchipTrace" value="_128" />
+  <parameter name="dcache_size" value="_0" />
+  <parameter name="dcache_ramBlockType" value="Automatic" />
+  <parameter name="dcache_omitDataMaster" value="false" />
+  <parameter name="dcache_numTCDM" value="_0" />
+  <parameter name="dcache_lineSize" value="_32" />
+  <parameter name="dcache_bursts" value="false" />
+  <parameter name="cpuReset" value="false" />
+  <parameter name="cpuID" value="0" />
+  <parameter name="breakSlave">cpu.jtag_debug_module</parameter>
+  <parameter name="breakOffset" value="32" />
+ </module>
+ <module name="sram" kind="altera_up_avalon_sram" version="9.0" enabled="1">
+  <parameter name="board" value="DE2" />
+  <parameter name="pixel_buffer" value="false" />
+ </module>
+ <module
+   name="character_buffer"
+   kind="altera_up_avalon_character_buffer"
+   version="9.0"
+   enabled="1">
+  <parameter name="vga_device" value="VGA Connector" />
+  <parameter name="enable_transparency" value="true" />
+  <parameter name="colour_bits" value="1-bit" />
+  <parameter name="resolution" value="80 x 60" />
+ </module>
+ <module
+   name="pixel_buffer"
+   kind="altera_up_avalon_pixel_buffer"
+   version="9.0"
+   enabled="1">
+  <parameter name="board" value="DE2" />
+  <parameter name="vga_device" value="VGA Connector" />
+  <parameter name="start_address" value="00000000" />
+  <parameter name="back_start_address" value="00096000" />
+  <parameter name="addr_mode" value="Consecutive" />
+  <parameter name="enlarge_width" value="1" />
+  <parameter name="enlarge_height" value="1" />
+  <parameter name="color_space" value="16-bit RGB" />
+ </module>
+ <module name="vga" kind="altera_up_avalon_vga" version="9.0" enabled="1">
+  <parameter name="board" value="DE2" />
+  <parameter name="device" value="VGA Connector" />
+ </module>
+ <module
+   name="alpha_blending"
+   kind="altera_up_avalon_alpha_blending"
+   version="9.0"
+   enabled="1" />
+ <module
+   name="jtag_uart"
+   kind="altera_avalon_jtag_uart"
+   version="9.1"
+   enabled="1">
+  <parameter name="allowMultipleConnections" value="false" />
+  <parameter name="hubInstanceID" value="0" />
+  <parameter name="readBufferDepth" value="64" />
+  <parameter name="readIRQThreshold" value="8" />
+  <parameter name="simInputCharacterStream" value="" />
+  <parameter name="simInteractiveOptions">INTERACTIVE_ASCII_OUTPUT</parameter>
+  <parameter name="useRegistersForReadBuffer" value="false" />
+  <parameter name="useRegistersForWriteBuffer" value="false" />
+  <parameter name="useRelativePathForSimFile" value="false" />
+  <parameter name="writeBufferDepth" value="64" />
+  <parameter name="writeIRQThreshold" value="8" />
+ </module>
+ <module
+   name="sdram"
+   kind="altera_avalon_new_sdram_controller"
+   version="9.1"
+   enabled="1">
+  <parameter name="TAC" value="5.5" />
+  <parameter name="TMRD" value="3" />
+  <parameter name="TRCD" value="20.0" />
+  <parameter name="TRFC" value="70.0" />
+  <parameter name="TRP" value="20.0" />
+  <parameter name="TWR" value="14.0" />
+  <parameter name="casLatency" value="3" />
+  <parameter name="columnWidth" value="8" />
+  <parameter name="dataWidth" value="16" />
+  <parameter name="generateSimulationModel" value="true" />
+  <parameter name="initNOPDelay" value="0.0" />
+  <parameter name="initRefreshCommands" value="2" />
+  <parameter name="masteredTristateBridgeSlave" value="" />
+  <parameter name="model" value="custom" />
+  <parameter name="numberOfBanks" value="4" />
+  <parameter name="numberOfChipSelects" value="1" />
+  <parameter name="pinsSharedViaTriState" value="false" />
+  <parameter name="powerUpDelay" value="100.0" />
+  <parameter name="refreshPeriod" value="15.625" />
+  <parameter name="registerDataIn" value="true" />
+  <parameter name="rowWidth" value="12" />
+ </module>
+ <module
+   name="Altera_UP_Flash_Memory_IP_Core_Avalon_Interface_0"
+   kind="Altera_UP_Flash_Memory_IP_Core_Avalon_Interface"
+   version="1.0"
+   enabled="1">
+  <parameter name="FLASH_MEMORY_ADDRESS_WIDTH" value="22" />
+ </module>
+ <module name="ps2" kind="altera_up_avalon_ps2" version="9.0" enabled="1" />
+ <module name="membuffer_0" kind="membuffer" version="1.0" enabled="1">
+  <parameter name="BASE_ADDR" value="1228800" />
+ </module>
+ <module
+   name="audio_and_video_config_0"
+   kind="altera_up_avalon_audio_and_video_config"
+   version="9.0"
+   enabled="1">
+  <parameter name="device">On Board - Audio and Video (DE2)</parameter>
+  <parameter name="eai" value="true" />
+  <parameter name="audio_in" value="Line In to ADC" />
+  <parameter name="dac_enable" value="true" />
+  <parameter name="mic_bypass" value="false" />
+  <parameter name="line_in_bypass" value="false" />
+  <parameter name="mic_attenuation" value="-6dB" />
+  <parameter name="data_format" value="Left Justified" />
+  <parameter name="bit_length" value="16" />
+  <parameter name="bosr" value="250fs/256fs" />
+  <parameter name="sample_rate" value="0" />
+ </module>
+ <module
+   name="pio_delay_length"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="16" />
+ </module>
+ <module
+   name="pio_overdrive_gain"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="16" />
+ </module>
+ <module
+   name="pio_overdrive_volume"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="16" />
+ </module>
+ <module
+   name="pio_overdrive_tone"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="16" />
+ </module>
+ <module
+   name="pio_delay_decay"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="8" />
+ </module>
+ <module
+   name="pio_delay_bypass"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="1" />
+ </module>
+ <module
+   name="pio_overdrive_bypass"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="1" />
+ </module>
+ <module
+   name="pio_overdrive_asymmetric"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="1" />
+ </module>
+ <module
+   name="pio_master_volume"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="16" />
+ </module>
+ <module
+   name="pio_compressor_gain"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="8" />
+ </module>
+ <module
+   name="pio_compressor_treshold"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="16" />
+ </module>
+ <module
+   name="pio_compressor_bypass"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="1" />
+ </module>
+ <module
+   name="pio_bitcrusher_bypass"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="1" />
+ </module>
+ <module
+   name="pio_bitcrusher_crush"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="4" />
+ </module>
+ <module
+   name="pio_bitcrusher_downsample"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="8" />
+ </module>
+ <module
+   name="pio_bitcrusher_drywet"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="16" />
+ </module>
+ <module
+   name="pio_tremolo_stereo_bypass"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="1" />
+ </module>
+ <module
+   name="pio_tremolo_stereo_depth"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="16" />
+ </module>
+ <module
+   name="pio_tremolo_stereo_sweep_a"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="4" />
+ </module>
+ <module
+   name="pio_octaver_bypass"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="1" />
+ </module>
+ <module
+   name="pio_octaver_dry_wet"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="16" />
+ </module>
+ <module
+   name="pio_output_power_left"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Input" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="16" />
+ </module>
+ <module
+   name="cpu_fpoint"
+   kind="altera_nios_custom_instr_floating_point"
+   version="6.1"
+   enabled="1">
+  <parameter name="useDivider" value="true" />
+ </module>
+ <module
+   name="analyzer_input_left"
+   kind="analyzer_input"
+   version="1.0"
+   enabled="1" />
+ <module
+   name="pio_output_power_right"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Input" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="16" />
+ </module>
+ <module
+   name="analyzer_input_right"
+   kind="analyzer_input"
+   version="1.0"
+   enabled="1" />
+ <module
+   name="pio_bitcrusher_tone"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="16" />
+ </module>
+ <module
+   name="pio_bitcrusher_flavor"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="4" />
+ </module>
+ <module
+   name="pio_tremolo_stereo_sweep_b"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="4" />
+ </module>
+ <module
+   name="pio_tremolo_stereo_mode"
+   kind="altera_avalon_pio"
+   version="9.1"
+   enabled="1">
+  <parameter name="bitClearingEdgeCapReg" value="false" />
+  <parameter name="bitModifyingOutReg" value="false" />
+  <parameter name="captureEdge" value="false" />
+  <parameter name="direction" value="Output" />
+  <parameter name="edgeType" value="RISING" />
+  <parameter name="generateIRQ" value="false" />
+  <parameter name="irqType" value="LEVEL" />
+  <parameter name="resetValue" value="0" />
+  <parameter name="simDoTestBenchWiring" value="false" />
+  <parameter name="simDrivenValue" value="0" />
+  <parameter name="width" value="1" />
+ </module>
+ <connection kind="clock" version="9.1" start="clk_0.clk" end="cpu.clk" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.instruction_master"
+   end="cpu.jtag_debug_module">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d02800" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="cpu.jtag_debug_module">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d02800" />
+ </connection>
+ <connection kind="clock" version="9.1" start="clk_0.clk" end="sram.clock_reset" />
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="character_buffer.clock_reset" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="character_buffer.avalon_char_control_slave">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d031e0" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="character_buffer.avalon_char_buffer_slave">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d00000" />
+ </connection>
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pixel_buffer.clock_reset" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pixel_buffer.avalon_pixel_buffer_slave">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d03020" />
+ </connection>
+ <connection kind="clock" version="9.1" start="clk_0.clk" end="vga.clock_reset" />
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="alpha_blending.clock_reset" />
+ <connection
+   kind="avalon_streaming"
+   version="9.1"
+   start="alpha_blending.avalon_blended_source"
+   end="vga.avalon_vga_sink" />
+ <connection kind="clock" version="9.1" start="clk_0.clk" end="jtag_uart.clk" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="jtag_uart.avalon_jtag_slave">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d031e8" />
+ </connection>
+ <connection kind="interrupt" version="9.1" start="cpu.d_irq" end="jtag_uart.irq">
+  <parameter name="irqNumber" value="0" />
+ </connection>
+ <connection
+   kind="avalon_streaming"
+   version="9.1"
+   start="character_buffer.avalon_char_source"
+   end="alpha_blending.avalon_foreground_sink" />
+ <connection
+   kind="avalon_streaming"
+   version="9.1"
+   start="pixel_buffer.avalon_pixel_buffer_source"
+   end="alpha_blending.avalon_background_sink" />
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="Altera_UP_Flash_Memory_IP_Core_Avalon_Interface_0.clock_sink" />
+ <connection kind="clock" version="9.1" start="clk_0.clk" end="ps2.clock_reset" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="ps2.avalon_ps2_slave">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d031f0" />
+ </connection>
+ <connection kind="interrupt" version="9.1" start="cpu.d_irq" end="ps2.interrupt">
+  <parameter name="irqNumber" value="1" />
+ </connection>
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="membuffer_0.clock_reset" />
+ <connection kind="clock" version="9.1" start="clk_0.clk" end="sdram.clk" />
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="audio_and_video_config_0.clock_reset" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="audio_and_video_config_0.avalon_on_board_config_slave">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d03000" />
+ </connection>
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_delay_length.clk" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_overdrive_volume.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d03030" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_overdrive_tone.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d03040" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_delay_bypass.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d03050" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_overdrive_bypass.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d03060" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_overdrive_asymmetric.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d03070" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_delay_decay.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d03080" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_overdrive_gain.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d03090" />
+ </connection>
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_overdrive_gain.clk" />
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_overdrive_volume.clk" />
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_overdrive_tone.clk" />
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_delay_decay.clk" />
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_delay_bypass.clk" />
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_overdrive_bypass.clk" />
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_overdrive_asymmetric.clk" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_master_volume.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d030a0" />
+ </connection>
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_master_volume.clk" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.instruction_master"
+   end="sram.avalon_sram_slave">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00c80000" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="sram.avalon_sram_slave">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00c80000" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_delay_length.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d030b0" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="Altera_UP_Flash_Memory_IP_Core_Avalon_Interface_0.flash_erase_control">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d031f8" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="membuffer_0.avalon_master"
+   end="sdram.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x0000" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="Altera_UP_Flash_Memory_IP_Core_Avalon_Interface_0.flash_data">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00800000" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="pixel_buffer.avalon_pixel_buffer_master"
+   end="sdram.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x0000" />
+ </connection>
+ <connection kind="avalon" version="6.1" start="cpu.data_master" end="sdram.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x0000" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_compressor_gain.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d030c0" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_compressor_treshold.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d030d0" />
+ </connection>
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_compressor_gain.clk" />
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_compressor_treshold.clk" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_compressor_bypass.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d030e0" />
+ </connection>
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_compressor_bypass.clk" />
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_bitcrusher_bypass.clk" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_bitcrusher_bypass.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d030f0" />
+ </connection>
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_bitcrusher_crush.clk" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_bitcrusher_crush.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d03100" />
+ </connection>
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_bitcrusher_downsample.clk" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_bitcrusher_downsample.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d03110" />
+ </connection>
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_bitcrusher_drywet.clk" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_bitcrusher_drywet.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d03120" />
+ </connection>
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_tremolo_stereo_bypass.clk" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_tremolo_stereo_bypass.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d03130" />
+ </connection>
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_tremolo_stereo_depth.clk" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_tremolo_stereo_depth.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d03140" />
+ </connection>
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_tremolo_stereo_sweep_a.clk" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_tremolo_stereo_sweep_a.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d03150" />
+ </connection>
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_octaver_bypass.clk" />
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_octaver_dry_wet.clk" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_octaver_bypass.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d03160" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_octaver_dry_wet.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d03170" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_output_power_left.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d03180" />
+ </connection>
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_output_power_left.clk" />
+ <connection
+   kind="nios_custom_instruction"
+   version="9.1"
+   start="cpu.custom_instruction_master"
+   end="cpu_fpoint.s1">
+  <parameter name="CIName" value="fpoint" />
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="252" />
+ </connection>
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="analyzer_input_left.clock" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="analyzer_input_left.avalon_slave">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d03190" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_output_power_right.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d031a0" />
+ </connection>
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_output_power_right.clk" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="analyzer_input_right.avalon_slave">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d031b0" />
+ </connection>
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="analyzer_input_right.clock" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_bitcrusher_tone.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d031c0" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_bitcrusher_flavor.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00d031d0" />
+ </connection>
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_bitcrusher_flavor.clk" />
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_bitcrusher_tone.clk" />
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_tremolo_stereo_sweep_b.clk" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_tremolo_stereo_sweep_b.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00c00000" />
+ </connection>
+ <connection
+   kind="clock"
+   version="9.1"
+   start="clk_0.clk"
+   end="pio_tremolo_stereo_mode.clk" />
+ <connection
+   kind="avalon"
+   version="6.1"
+   start="cpu.data_master"
+   end="pio_tremolo_stereo_mode.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00c00010" />
+ </connection>
+</system>

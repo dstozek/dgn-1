@@ -1,0 +1,3 @@
+NOTE:     Speed Grade c7 used for analysis
+CRITWARNING:  Board Timings: You have selected one or more default board trace delays. Please modify 'FPGA Clock  output..' and 'Memory DQ/DQS..' fields to reflect requirements for your specific system so that the correct timing set-up and analysis can be performed.
+NOTE:     For a 'Custom' memory device, please ensure that your chosen CL is compatible with your clock speed selection

@@ -1,0 +1,1522 @@
+--------------------------------------------------------------------
+--
+--	MULTCORE
+--
+--  Copyright 1991-2010 Corporation  
+--  Your use of Altera Corporation's design tools, logic functions  
+--  and other software and tools, and its AMPP partner logic  
+--  functions, and any output files from any of the foregoing  
+--  (including device programming or simulation files), and any  
+--  associated documentation or information are expressly subject  
+--  to the terms and conditions of the Altera Program License  
+--  Subscription Agreement, Altera MegaCore Function License  
+--  Agreement, or other applicable license agreement, including,  
+--  without limitation, that your use is for the sole purpose of  
+--  programming logic devices manufactured by Altera and sold by  
+--  Altera or its authorized distributors.  Please refer to the  
+--  applicable agreement for further details. 
+--  
+--  9.1 Build 350  10/07/2009   
+--
+--	Version 4.0
+--
+--------------------------------------------------------------
+
+--------------------------------------------------------------
+-- Name : multcore.tdf										--
+-- Function: This is the multiplication core subdesign. It	--
+-- 			 accepts two inputs and returns their product.	--
+--															--
+-- Features: * Optimized for the cases where at least one	--
+--			   is a constant value.							--
+--			 * This design can be pipelined.				--
+--			 * The parallel adder used to add partial 		--
+--			   products is a CSA-based one for nonpipelined --
+--			   MAX cases. It's CPA-based	                --
+--			   for all other cases.							--
+--			 * Using USE_EAB parameter it can be 			--
+--			   implemented using EABs (along with parallel  --
+--			   adders when necessary).						--
+--------------------------------------------------------------
+INCLUDE "aglobal91.inc";	% device definitions %
+INCLUDE "lpm_add_sub";
+INCLUDE "csa_add";
+INCLUDE "mpar_add";
+INCLUDE "muleabz";
+INCLUDE "mul_lfrg.inc";
+INCLUDE "mul_boothc.inc";
+INCLUDE "alt_ded_mult";
+INCLUDE "alt_ded_mult_y";
+INCLUDE "dffpipe";
+
+PARAMETERS
+(
+	WIDTHA,
+	WIDTHB,
+	LPM_REPRESENTATION = "UNSIGNED",
+	LATENCY = 0,
+	ONE_INPUT_IS_CONSTANT = "NO",
+	USE_EAB = "OFF",
+	MAXIMIZE_SPEED = 5,
+	OP_MODE = 0,
+	DEVICE_FAMILY,
+	CARRY_CHAIN = "MANUAL",
+	DEDICATED_MULTIPLIER_CIRCUITRY = "YES",
+	SUB_DEDICATED_MULTIPLIER_CIRCUITRY = "YES",
+	DSP_BLOCK_BALANCING = "AUTO"
+);
+
+-- A useful function ...
+DEFINE   MAX(a, b) 			= a > b ? a : b;
+
+-- In OP_MODE = 1, 2, & 3 cases, will append extra bits to the left side of the operands
+-- such that the resulting operands have even number of bits. The procedure is:
+-- If unsigned, two 0 bits will be added to even-numbered inputs, one to odd-numbered ones
+-- If signed, two 0 bits will be added to even-numbered inputs, and 1 sign-extended bit
+-- for odd-numbered ones
+CONSTANT EFV_WIDTHA = WIDTHA + (OP_MODE > 0 ? (2-(WIDTHA MOD 2)) : 0);
+CONSTANT EFV_WIDTHB = WIDTHB + (OP_MODE > 0 ? (2-(WIDTHB MOD 2)) : 0);
+
+-----------------------------------------------------
+-- Parameters used in non-EAB-based implementations
+-----------------------------------------------------
+CONSTANT BLOCKS 			= CEIL(EFV_WIDTHA DIV 4);
+CONSTANT FULL_WIDTHR 		= WIDTHA + WIDTHB;
+CONSTANT CPA_LEVELS 		= EFV_WIDTHB < 2 ? 0 : CEIL(LOG2(EFV_WIDTHB));
+CONSTANT TOT_LEVELS	 		= ONE_INPUT_IS_CONSTANT == "NO" ? CPA_LEVELS+1 :
+																CEIL(LOG2(BLOCKS))+3;
+CONSTANT TOT_STAGES 		= ONE_INPUT_IS_CONSTANT == "NO" ? TOT_LEVELS :
+																CEIL(LOG2(BLOCKS))+1;
+CONSTANT EXT_FULL_WIDTHR 	= 4*BLOCKS + EFV_WIDTHB;
+
+-- Latency related stuff. DEC_NEED_CLOCK indicates whether the decoder stage
+-- in non_EAB implemetation should be registered for pipelining.
+DEFINE   MOD_DIST(n, d)		= ((2 * n) > d ? d - n : n);
+DEFINE   LATENCY_MOD(k)		= ((k * (LATENCY + 1)) MOD TOT_STAGES);
+CONSTANT DEC_NEED_CLK		= -((LATENCY_MOD(1) == 0) #
+							    (LATENCY_MOD(1) > LATENCY_MOD(2) &
+			  				     MOD_DIST(LATENCY_MOD(1), TOT_STAGES) <
+								 MOD_DIST(LATENCY_MOD(2), TOT_STAGES)) #
+			  				    (LATENCY_MOD(1) < LATENCY_MOD(0) &
+							     MOD_DIST(LATENCY_MOD(1), TOT_STAGES) <=
+								 MOD_DIST(LATENCY_MOD(0), TOT_STAGES)));
+
+--------------------------------------------------
+-- Parameters used in EAB-based implementations
+--------------------------------------------------
+CONSTANT EAB_NEEDS_NO_ADDER = -((ONE_INPUT_IS_CONSTANT == "YES" &
+									EFV_WIDTHA <= 8) #
+							    (ONE_INPUT_IS_CONSTANT == "NO" &
+								   (EFV_WIDTHA + EFV_WIDTHB <= 8)));
+
+CONSTANT OPT_WIDTHA = (EAB_NEEDS_NO_ADDER > 0) ? EFV_WIDTHA :
+							(ONE_INPUT_IS_CONSTANT == "YES") ? 8 : 4;
+CONSTANT A_BLOCKS 	= CEIL(EFV_WIDTHA DIV OPT_WIDTHA);
+CONSTANT REM_A_BITS = (EFV_WIDTHA MOD OPT_WIDTHA > 0) ?
+							(EFV_WIDTHA MOD OPT_WIDTHA) : OPT_WIDTHA;
+CONSTANT EAB_TOT_LEVELS	= CEIL(LOG2(A_BLOCKS)) + CEIL(LOG2(OPT_WIDTHA)) + 1;
+CONSTANT EAB_TOT_STAGES = 2;
+CONSTANT EAB_EXT_FULL_WIDTHR = OPT_WIDTHA*A_BLOCKS + EFV_WIDTHB;
+
+-------------------------------------------------------------------
+-- Special case of FLEX_FAST/SIGNED uses Booth decoding algorithm
+-- Parameters used in Booth decoding-based implementation
+-------------------------------------------------------------------
+CONSTANT RIGHT_PARTIAL_SELECT_GROUP_NUM = (EFV_WIDTHB > 1) ? (EFV_WIDTHB MOD 2) : 0;
+CONSTANT FULL_SELECT_GROUP_NUM = (EFV_WIDTHB > 1) ? FLOOR ((EFV_WIDTHB-2) DIV 2) : 0;
+CONSTANT TOTAL_PP_NUM = CEIL(EFV_WIDTHB DIV 2);
+CONSTANT BOOTH_CPA_LEVELS = ((EFV_WIDTHA+2 >= 2*TOTAL_PP_NUM) & (TOTAL_PP_NUM MOD 2 > 0)) ?
+								CEIL(LOG2(TOTAL_PP_NUM+1)) : CEIL(LOG2(TOTAL_PP_NUM));
+CONSTANT BOOTH_HAS_BOOTHC = (OP_MODE > 0 ? 1 : 0);
+CONSTANT BOOTH_TOT_LEVELS = BOOTH_CPA_LEVELS + 2;
+CONSTANT BOOTH_TOT_STAGES = BOOTH_CPA_LEVELS + 1 + BOOTH_HAS_BOOTHC;
+CONSTANT BOOTH_BEGIN_STAGE_NUM = 1 + BOOTH_HAS_BOOTHC;
+
+DEFINE	 BOOTH_LATENCY_MOD(k) = ((k * (LATENCY + 1)) MOD BOOTH_TOT_STAGES);
+CONSTANT BOOTH_DEC_NEED_CLK	= -((BOOTH_LATENCY_MOD(BOOTH_BEGIN_STAGE_NUM) == 0) #
+							    (BOOTH_LATENCY_MOD(BOOTH_BEGIN_STAGE_NUM) >
+										BOOTH_LATENCY_MOD(BOOTH_BEGIN_STAGE_NUM+1) &
+			  				     MOD_DIST(BOOTH_LATENCY_MOD(BOOTH_BEGIN_STAGE_NUM), BOOTH_TOT_STAGES) <
+								 MOD_DIST(BOOTH_LATENCY_MOD(BOOTH_BEGIN_STAGE_NUM+1), BOOTH_TOT_STAGES)) #
+			 				    (BOOTH_LATENCY_MOD(BOOTH_BEGIN_STAGE_NUM) < BOOTH_LATENCY_MOD(BOOTH_BEGIN_STAGE_NUM-1) &
+							     MOD_DIST(BOOTH_LATENCY_MOD(BOOTH_BEGIN_STAGE_NUM), BOOTH_TOT_STAGES) <=
+								 MOD_DIST(BOOTH_LATENCY_MOD(BOOTH_BEGIN_STAGE_NUM-1), BOOTH_TOT_STAGES)));
+
+CONSTANT BOOTH_MULBOOTHC_NEED_CLK = -((BOOTH_LATENCY_MOD(1) == 0) #
+							    (BOOTH_LATENCY_MOD(1) > BOOTH_LATENCY_MOD(2) &
+			  				     MOD_DIST(BOOTH_LATENCY_MOD(1), BOOTH_TOT_STAGES) <
+								 MOD_DIST(BOOTH_LATENCY_MOD(2), BOOTH_TOT_STAGES)) #
+			 				    (BOOTH_LATENCY_MOD(1) < BOOTH_LATENCY_MOD(0) &
+							     MOD_DIST(BOOTH_LATENCY_MOD(1), BOOTH_TOT_STAGES) <=
+								 MOD_DIST(BOOTH_LATENCY_MOD(0), BOOTH_TOT_STAGES)));
+
+-------------------------------------------------------------------
+-- Special case of FLEX_FAST/SIGNED using the new modified Booth
+-- encoding algorithm
+-------------------------------------------------------------------
+CONSTANT MOD_BOOTH_FULL_SEL_NUM = (TOTAL_PP_NUM > 1) ? (TOTAL_PP_NUM-2) : 0;
+CONSTANT MOD_BOOTH_TOT_NORM_NUM = (TOTAL_PP_NUM > 1) ? (TOTAL_PP_NUM-1) : 0;
+
+----------------------------------
+-- Mercury dedicated multiplier --
+----------------------------------
+DEFINE DSP_BLOCK_BALANCING_CHECK() =	(DSP_BLOCK_BALANCING != "Off") & (DSP_BLOCK_BALANCING != "Auto") &
+										(DSP_BLOCK_BALANCING != "Logic Elements");
+DEFINE MOD_DEDICATED_MULTIPLIER_CIRCUITRY() = (FAMILY_HAS_DSP_BLOCK() & DSP_BLOCK_BALANCING_CHECK()) ? "YES" : SUB_DEDICATED_MULTIPLIER_CIRCUITRY;
+DEFINE CAN_USE_DEDICATED_CIRCUITRY() = ((WIDTHA > 2) # (WIDTHB > 2)) & ((WIDTHA >= 2) & (WIDTHB >= 2));
+DEFINE USE_DEDICATED_MULTIPLIER() = (MOD_DEDICATED_MULTIPLIER_CIRCUITRY() == "YES") & (FAMILY_HAS_DSP_BLOCK() # ((FAMILY_MERCURY() == 1) & CAN_USE_DEDICATED_CIRCUITRY()));
+DEFINE SWITCH_INPUTS() = WIDTHA < WIDTHB;
+DEFINE MAKE_EVEN(x) = x + (x MOD 2);
+CONSTANT WIDTH_A_ACTUAL = SWITCH_INPUTS() ? WIDTHB : WIDTHA;
+CONSTANT WIDTH_B_ACTUAL = SWITCH_INPUTS() ? MAKE_EVEN(WIDTHA) : MAKE_EVEN(WIDTHB);
+DEFINE A_CONTRIBUTION_CALC(sofar, togo) = togo <= 16 ? sofar : A_CONTRIBUTION_CALC(sofar + 1, CEIL(togo DIV 2));
+CONSTANT A_CONTRIBUTION_TO_TERM = A_CONTRIBUTION_CALC(0, WIDTH_A_ACTUAL);
+CONSTANT B_CONTRIBUTION_TO_TERM = CEIL(LOG2(WIDTH_B_ACTUAL));
+CONSTANT ACTUAL_TERMINATION_LEVEL = A_CONTRIBUTION_TO_TERM + B_CONTRIBUTION_TO_TERM;
+
+SUBDESIGN multcore
+(
+	dataa	[WIDTHA-1..0]				: INPUT;
+	datab	[WIDTHB-1..0]				: INPUT;
+	clock									: INPUT = GND;
+	aclr									: INPUT = GND;
+	clken									: INPUT = VCC;
+ 	result	[WIDTHA+WIDTHB-1..0] 	: OUTPUT;
+)
+
+VARIABLE
+	IF !USE_DEDICATED_MULTIPLIER() GENERATE
+		IF (USE_EAB == "OFF") # (USE_EAB == "ON" & FAMILY_HAS_EAB() == 0) GENERATE
+			----------------------------------------------
+			-- 			Non_EAB Implementation 			--
+			----------------------------------------------
+			IF !(WIDTHB == 1 # WIDTHA == 1 #
+				(WIDTHB == 2 & WIDTHA == 2)) GENERATE
+
+				IF ONE_INPUT_IS_CONSTANT == "YES" GENERATE
+					-------------------------------------
+					-- case when one input is constant --
+					-------------------------------------
+					ina_reg[EFV_WIDTHA-1..0]				: NODE;
+					ina_reg_clkd[3..0]						: NODE;
+					inb_reg[EFV_WIDTHB+4-1..0]				: NODE;
+
+					IF USED(clock) & (DEC_NEED_CLK == 1) GENERATE
+						romout[BLOCKS-1..0][EFV_WIDTHB+4-1..0]  : DFFE;
+					ELSE GENERATE
+						romout[BLOCKS-1..0][EFV_WIDTHB+4-1..0]  : NODE;
+					END GENERATE;
+
+					IF !(LPM_REPRESENTATION == "SIGNED" & BLOCKS == 1) GENERATE
+						bnodes[15..0][EFV_WIDTHB+3..0]		: NODE;
+					ELSE GENERATE
+						bnodes[8..0][EFV_WIDTHB+3..0]		: NODE;
+					END GENERATE;
+
+					nodes_mslut[15..0][EFV_WIDTHB+3..0]		: NODE;
+
+					-- Parallel adder declarations. The parallel adder used is a CSA_based
+					-- adder for "non-pipelined, MAX" cases
+					IF !USED(clock) &
+					  !((FAMILY_STRATIX() == 1) &
+						USE_CARRY_CHAINS()) GENERATE
+						padder	: csa_add WITH (SIZE = EXT_FULL_WIDTHR,
+												WIDTH = BLOCKS,
+												END_ADDER = 1);
+
+					ELSE GENERATE
+						padder	: mpar_add WITH (SIZE = EFV_WIDTHB+4,
+												 WIDTH = BLOCKS,
+												 REPRESENTATION = LPM_REPRESENTATION,
+												 INT_LATENCY = LATENCY,
+												 LEVEL = 3,
+												 TOT_LEVELS = TOT_LEVELS,
+												 PREV_SING_SIZE = EFV_WIDTHB+4,
+												 STAGE = 1,
+												 TOT_STAGES = TOT_STAGES);
+					END GENERATE;
+
+				ELSE GENERATE
+					-----------------------------------------
+					-- case when one input is not constant --
+					-----------------------------------------
+					IF !((FAMILY_STRATIX() == 1) & USE_CARRY_CHAINS() &
+						((LPM_REPRESENTATION == "SIGNED" & MAXIMIZE_SPEED < 9) #
+						 (LPM_REPRESENTATION == "UNSIGNED" & MAXIMIZE_SPEED < 6))) GENERATE
+						IF USED(clock) & (DEC_NEED_CLK == 1) GENERATE
+							decoder_node[EFV_WIDTHB-1..0][EFV_WIDTHA-1..0] : DFFE;
+
+						ELSE GENERATE
+							IF (FAMILY_STRATIX() == 1) & USE_CARRY_CHAINS() GENERATE
+								decoder_node[EFV_WIDTHB-1..0][EFV_WIDTHA-1..0] : LCELL;
+							ELSE GENERATE
+								decoder_node[EFV_WIDTHB-1..0][EFV_WIDTHA-1..0] : NODE;
+							END GENERATE;
+						END GENERATE;
+
+						IF LPM_REPRESENTATION == "SIGNED" GENERATE
+							IF USED(clock) #
+							 ((FAMILY_STRATIX() == 1) & USE_CARRY_CHAINS()) GENERATE
+								IF USED(clock) & (DEC_NEED_CLK == 1) GENERATE
+									sign_ff : DFFE;
+								ELSE GENERATE
+									sign_ff : NODE;
+								END GENERATE;
+							END GENERATE;
+						END GENERATE;
+
+						-- parallel adder declaration
+						IF !USED(clock) &
+						   !((FAMILY_STRATIX() == 1) &	USE_CARRY_CHAINS()) GENERATE
+							IF LPM_REPRESENTATION == "UNSIGNED" GENERATE
+								padder	: csa_add WITH (SIZE = FULL_WIDTHR,
+														WIDTH = EFV_WIDTHB,
+														END_ADDER = 1);
+							ELSE GENERATE
+								padder	: csa_add WITH (SIZE = FULL_WIDTHR,
+														WIDTH = EFV_WIDTHB+1,
+														END_ADDER = 1);
+							END GENERATE;
+
+						ELSE GENERATE
+							padder	: mpar_add WITH (SIZE = EFV_WIDTHA+1,
+													 WIDTH = EFV_WIDTHB,
+													 REPRESENTATION = LPM_REPRESENTATION,
+													 LEVEL = 1,
+													 TOT_LEVELS = TOT_LEVELS,
+													 INT_LATENCY = LATENCY,
+													 STAGE = 1,
+													 TOT_STAGES = TOT_STAGES);
+						END GENERATE;
+					ELSE GENERATE
+						-------------------------------------------------------------------
+						-- Special case of FLEX_FAST/SIGNED/ uses Booth decoding algorithm
+						-- for minimizing area with a possible sacrifice of speed
+						-------------------------------------------------------------------
+						IF (LPM_REPRESENTATION == "SIGNED" & MAXIMIZE_SPEED > 5 & MAXIMIZE_SPEED < 9) GENERATE
+							IF (EFV_WIDTHA > 1) GENERATE
+								mul_lfrg_first_mod : mul_lfrg WITH (WIDTH = EFV_WIDTHA-1,
+																BIT0_OF_SELECT_IS_GND = "TRUE");
+
+								IF (FULL_SELECT_GROUP_NUM > 0) GENERATE
+									mul_lfrg_mid_mod[FULL_SELECT_GROUP_NUM..1] : mul_lfrg WITH (
+																			WIDTH = EFV_WIDTHA-1,
+																			BIT0_OF_DATA_IS_GND = "FALSE",
+																			BIT0_OF_SELECT_IS_GND = "FALSE",
+																			BIT2_OF_SELECT_IS_SIGN_EXT = "FALSE");
+								END GENERATE;
+
+								IF (RIGHT_PARTIAL_SELECT_GROUP_NUM > 0) GENERATE
+									mul_lfrg_last_mod : mul_lfrg WITH (	WIDTH = EFV_WIDTHA-1,
+																		BIT2_OF_SELECT_IS_SIGN_EXT = "TRUE");
+								END GENERATE;
+							END GENERATE;
+
+							IF USED(clock) & (BOOTH_DEC_NEED_CLK == 1) GENERATE
+								partial_product_node[TOTAL_PP_NUM-1..0][EFV_WIDTHA..0]  : DFFE;
+								pp_carry_node[TOTAL_PP_NUM-1..0]			: DFFE;
+							ELSE GENERATE
+								partial_product_node[TOTAL_PP_NUM-1..0][EFV_WIDTHA..0]  : NODE;
+								pp_carry_node[TOTAL_PP_NUM-1..0]			: NODE;
+							END GENERATE;
+						ELSE GENERATE
+
+							IF (OP_MODE == 0) GENERATE
+								IF (MOD_BOOTH_TOT_NORM_NUM > 0) GENERATE
+									booth_enc : mul_boothc WITH (WIDTH = MOD_BOOTH_TOT_NORM_NUM,
+																 MS_BIT = 0, OP_MODE = OP_MODE);
+								END GENERATE;
+
+								msb_booth_enc : mul_boothc WITH (WIDTH = 1, MS_BIT = 1, OP_MODE = OP_MODE);
+
+								IF (MOD_BOOTH_TOT_NORM_NUM > 0) GENERATE
+									sel_node[2*MOD_BOOTH_TOT_NORM_NUM-1..0]	: NODE;
+								END GENERATE;
+								msb_sel_node[2..0] 							: NODE;
+
+								mul_lfrg_last_mod : mul_lfrg WITH (WIDTH = EFV_WIDTHA-1,
+																	BIT0_OF_DATA_IS_GND = "FALSE",
+																	BIT0_OF_SELECT_IS_GND = "FALSE",
+																	BIT2_OF_SELECT_IS_SIGN_EXT = "FALSE",
+																	INPUTS_ARE_IDENTICAL = "FALSE");
+
+								IF USED(clock) & (BOOTH_DEC_NEED_CLK == 1) GENERATE
+									partial_product_node[TOTAL_PP_NUM-1..0][EFV_WIDTHA..0]  : DFFE;
+									pp_carry_reg_node[TOTAL_PP_NUM-1..0]	: DFFE;
+								ELSE GENERATE
+									partial_product_node[TOTAL_PP_NUM-1..0][EFV_WIDTHA..0]  : NODE;
+									pp_carry_reg_node[TOTAL_PP_NUM-1..0]	: NODE;
+								END GENERATE;
+
+								dataa_reg_node[WIDTHA-1.. 0]		: NODE;
+								pp_carry_node[TOTAL_PP_NUM-1..0] 	: NODE;
+
+							ELSE GENERATE
+								booth_enc : mul_boothc WITH (WIDTH = TOTAL_PP_NUM,
+															 MS_BIT = 0, OP_MODE = OP_MODE);
+
+								sel_node[2*TOTAL_PP_NUM-1..0]		: NODE;
+								pp_carry_node[TOTAL_PP_NUM-1..0] 	: NODE;
+
+								IF USED(clock) & (BOOTH_DEC_NEED_CLK == 1) GENERATE
+									partial_product_node[TOTAL_PP_NUM-1..0][EFV_WIDTHA..0]  : DFFE;
+									IF (TOTAL_PP_NUM > 1) GENERATE
+										pp_carry_reg_node[(OP_MODE == 1 # OP_MODE == 4 # OP_MODE == 2) ? TOTAL_PP_NUM-2 : TOTAL_PP_NUM-1..0]	: DFFE;
+									END GENERATE;
+								ELSE GENERATE
+									partial_product_node[TOTAL_PP_NUM-1..0][EFV_WIDTHA..0]  : NODE;
+									IF (TOTAL_PP_NUM > 1) GENERATE
+										pp_carry_reg_node[(OP_MODE == 1 # OP_MODE == 4 # OP_MODE == 2) ? TOTAL_PP_NUM-2 : TOTAL_PP_NUM-1..0]	: NODE;
+									END GENERATE;
+								END GENERATE;
+
+								IF (TOTAL_PP_NUM > 1) GENERATE
+									IF USED(clock) & (BOOTH_MULBOOTHC_NEED_CLK == 1) GENERATE
+										dataa_reg_node[WIDTHA-1.. 0]	: DFFE;
+									ELSE GENERATE
+										dataa_reg_node[WIDTHA-1.. 0]	: NODE;
+									END GENERATE;
+								END GENERATE;
+							END GENERATE;
+
+							a_node[EFV_WIDTHA+1.. 0] 	: NODE;
+							b_node[EFV_WIDTHB-1..0]		: NODE;
+							pp_carry_reg_reg_node[(OP_MODE == 1 # OP_MODE == 4 # OP_MODE == 2) ? TOTAL_PP_NUM-2 : TOTAL_PP_NUM-1..0]	: NODE;
+						END GENERATE;
+
+						select_group_node[TOTAL_PP_NUM-1..0][2..0]	: NODE;
+
+						IF (WIDTHA+2 >= 2*TOTAL_PP_NUM) GENERATE
+							IF (TOTAL_PP_NUM MOD 2 > 0) GENERATE
+								carry_vector_node[EFV_WIDTHA+1..0]	: NODE;
+
+								-- Note: Extra +1 in SIZE is for carry vector to have a rightmost 0
+								-- at all times to make sure it will not be incorrectly sign-extended
+								-- by the parallel adder.
+								padder	: mpar_add WITH (SIZE = EFV_WIDTHA+2+1,
+														 WIDTH = TOTAL_PP_NUM+1,
+														 REPRESENTATION = "SIGNED",
+														 INT_LATENCY = LATENCY,
+														 LEVEL = 2,
+														 TOT_LEVELS = BOOTH_TOT_LEVELS,
+														 PREV_SING_SIZE = EFV_WIDTHA+2+1,
+														 STAGE = BOOTH_BEGIN_STAGE_NUM,
+														 TOT_STAGES = BOOTH_TOT_STAGES,
+														 BOOTH_ADDER = "YES");
+							ELSE GENERATE
+								padder	: mpar_add WITH (SIZE = EFV_WIDTHA+2+2,
+														 WIDTH = TOTAL_PP_NUM,
+														 REPRESENTATION = "SIGNED",
+														 INT_LATENCY = LATENCY,
+														 LEVEL = 2,
+														 TOT_LEVELS = BOOTH_TOT_LEVELS,
+														 PREV_SING_SIZE = EFV_WIDTHA+2+2,
+														 STAGE = BOOTH_BEGIN_STAGE_NUM,
+														 TOT_STAGES = BOOTH_TOT_STAGES,
+														 BOOTH_ADDER = "YES",
+														 CREATE_MS_BOOTH_ADDER = "YES",
+														 MPARADD_OP_MODE = 2);	-- to eliminate FF stuck at GND warnings
+							END GENERATE;
+						ELSE GENERATE
+							carry_vector_node[FULL_WIDTHR-1..0]	: NODE;
+
+							padder	: mpar_add WITH (SIZE = EFV_WIDTHA+2,
+													 WIDTH = TOTAL_PP_NUM,
+													 REPRESENTATION = "SIGNED",
+													 INT_LATENCY = LATENCY,
+													 LEVEL = 2,
+													 TOT_LEVELS = BOOTH_TOT_LEVELS,
+													 PREV_SING_SIZE = EFV_WIDTHA+2,
+													 STAGE = BOOTH_BEGIN_STAGE_NUM,
+													 TOT_STAGES = BOOTH_TOT_STAGES);
+						END GENERATE;
+					END GENERATE;
+				END GENERATE;
+			ELSE GENERATE
+				IF LPM_REPRESENTATION == "SIGNED" &
+				 ((WIDTHB == 1 & WIDTHA > 2) #
+				  (WIDTHA == 1 & WIDTHB > 2)) GENERATE
+					adder : lpm_add_sub WITH (LPM_WIDTH = (MAX(WIDTHA, WIDTHB)+1),
+											  LPM_PIPELINE = 0);
+				END GENERATE;
+			END GENERATE;
+
+		ELSE GENERATE
+			------------------------------------------------------
+			-- 				Implementation in EABs				--
+			------------------------------------------------------
+			IF A_BLOCKS > 1 GENERATE
+				IF USED(clock) & USED(aclr) GENERATE
+					 multer[A_BLOCKS-2..0] 	: muleabz WITH (WIDTHA = OPT_WIDTHA,
+															WIDTHB = WIDTHB,
+															A_REPRESENTATION = "UNSIGNED",
+															B_REPRESENTATION = LPM_REPRESENTATION,
+															PIPELINE = LATENCY,
+															INPUT_B_IS_CONSTANT = ONE_INPUT_IS_CONSTANT,
+															EXT_EAB_OUT_REG = "YES",
+															USE_EAB = USE_EAB,
+															MAXIMIZE_SPEED = MAXIMIZE_SPEED);
+
+				ELSE GENERATE
+					 multer[A_BLOCKS-2..0] 	: muleabz WITH (WIDTHA = OPT_WIDTHA,
+															WIDTHB = WIDTHB,
+															A_REPRESENTATION = "UNSIGNED",
+															B_REPRESENTATION = LPM_REPRESENTATION,
+															PIPELINE = LATENCY,
+															INPUT_B_IS_CONSTANT = ONE_INPUT_IS_CONSTANT,
+															EXT_EAB_OUT_REG = "NO",
+															USE_EAB = USE_EAB,
+															MAXIMIZE_SPEED = MAXIMIZE_SPEED);
+				END GENERATE;
+			END GENERATE;
+
+			IF USED(clock) & USED(aclr) GENERATE
+				last_multer	: muleabz WITH (WIDTHA = REM_A_BITS,
+											WIDTHB = WIDTHB,
+											A_REPRESENTATION = LPM_REPRESENTATION,
+											B_REPRESENTATION = LPM_REPRESENTATION,
+											PIPELINE = LATENCY,
+											INPUT_B_IS_CONSTANT = ONE_INPUT_IS_CONSTANT,
+											EXT_EAB_OUT_REG = "YES",
+											USE_EAB = USE_EAB,
+											MAXIMIZE_SPEED = MAXIMIZE_SPEED);
+
+			ELSE GENERATE
+				last_multer	: muleabz WITH (WIDTHA = REM_A_BITS,
+											WIDTHB = WIDTHB,
+											A_REPRESENTATION = LPM_REPRESENTATION,
+											B_REPRESENTATION = LPM_REPRESENTATION,
+											PIPELINE = LATENCY,
+											INPUT_B_IS_CONSTANT = ONE_INPUT_IS_CONSTANT,
+											EXT_EAB_OUT_REG = "NO",
+											USE_EAB = USE_EAB,
+											MAXIMIZE_SPEED = MAXIMIZE_SPEED);
+			END GENERATE;
+
+			-- parallel adder declaration
+			IF !USED(clock) & !USE_CARRY_CHAINS() GENERATE
+				par_adder	: csa_add WITH (SIZE = EAB_EXT_FULL_WIDTHR,
+											WIDTH = A_BLOCKS,
+											END_ADDER = 1);
+
+			ELSE GENERATE
+				par_adder	: mpar_add WITH (SIZE = WIDTHB + OPT_WIDTHA,
+											 WIDTH = A_BLOCKS,
+											 REPRESENTATION = LPM_REPRESENTATION,
+											 INT_LATENCY = 1,
+											 LEVEL = CEIL(LOG2(OPT_WIDTHA)) + 1,
+											 TOT_LEVELS = EAB_TOT_LEVELS,
+											 PREV_SING_SIZE = WIDTHB + OPT_WIDTHA,
+											 STAGE = 1,
+											 TOT_STAGES = EAB_TOT_STAGES);
+			END GENERATE;
+		END GENERATE;
+	ELSE GENERATE
+		------------------------------------------------------
+		-- Implementing with dedicated multiplier circuitry --
+		------------------------------------------------------
+		IF FAMILY_MERCURY() == 1 GENERATE
+			dedicated_multiplier : alt_ded_mult WITH	(
+															WIDTH_A = WIDTH_A_ACTUAL,
+															WIDTH_B = WIDTH_B_ACTUAL,
+															PIPELINE = USED(clock) ? LATENCY : 0,
+															REPRESENTATION = LPM_REPRESENTATION,
+															TERMINATION_LEVEL = ACTUAL_TERMINATION_LEVEL,
+															LEVEL = 0,	-- root
+															LATENCY_REMAINING = USED(clock) ? LATENCY : 0,
+															A_REP = LPM_REPRESENTATION,
+															B_REP = LPM_REPRESENTATION
+														);
+			real_dataa[WIDTH_A_ACTUAL - 1..0] : NODE;
+			real_datab[WIDTH_B_ACTUAL - 1..0] : NODE;
+			IF USED(clock) GENERATE
+				a_side_pipe : dffpipe WITH	(
+												WIDTH = WIDTH_A_ACTUAL,
+												DELAY = LATENCY
+											);
+
+				b_side_pipe : dffpipe WITH	(
+												WIDTH = WIDTH_B_ACTUAL,
+												DELAY = LATENCY
+											);
+			END GENERATE;
+		ELSE GENERATE
+			dedicated_multiplier : alt_ded_mult_y WITH	(
+															WIDTH_A = SWITCH_INPUTS() ? WIDTHB : WIDTHA,
+															WIDTH_B = SWITCH_INPUTS() ? WIDTHA : WIDTHB,
+															PIPELINE = USED(clock) ? LATENCY : 0,
+															REPRESENTATION_A = LPM_REPRESENTATION,
+															REPRESENTATION_B = LPM_REPRESENTATION,
+															SUB_DEDICATED_MULTIPLIER_CIRCUITRY = "YES"
+														);
+		END GENERATE;
+
+	END GENERATE;
+BEGIN
+	IF !USE_DEDICATED_MULTIPLIER() GENERATE
+		IF (USE_EAB == "OFF") # (USE_EAB == "ON" & FAMILY_HAS_EAB() == 0) GENERATE
+			----------------------------------------------
+			-- 			Non_EAB Implementation 			--
+			----------------------------------------------
+			-- special cases
+			IF WIDTHA == 1 GENERATE
+				IF LPM_REPRESENTATION == "UNSIGNED" GENERATE
+					result[] = (GND, dataa[0] & datab[]);
+
+				ELSE GENERATE
+					IF WIDTHB <= 2 GENERATE
+						IF WIDTHB == 1 GENERATE
+							result[] = (GND, dataa[0] & datab[0]);
+
+						ELSE GENERATE
+							IF WIDTHB == 2 GENERATE
+								result[0] = dataa[0] & datab[0];
+								result[1] = (!datab[0] $ !datab[1]) & dataa[0];
+								result[2] = datab[0] & !datab[1] & dataa[0];
+							END GENERATE;
+						END GENERATE;
+
+					ELSE GENERATE
+						adder.dataa[0] = dataa[0];
+						adder.dataa[WIDTHB..1] = GND;
+						adder.datab[WIDTHB-1..0] = !datab[] & dataa[0];
+						adder.datab[WIDTHB] = !datab[WIDTHB-1] & dataa[0];
+						result[] = adder.result[];
+					END GENERATE;
+				END GENERATE;
+
+			ELSE GENERATE
+				IF WIDTHB == 1 GENERATE
+					IF LPM_REPRESENTATION == "UNSIGNED" GENERATE
+						result[] = (GND, dataa[] & datab[0]);
+
+					ELSE GENERATE
+						IF WIDTHA == 2 GENERATE
+							result[0] = dataa[0] & datab[];
+							result[1] = (!dataa[0] $ !dataa[1]) & datab[0];
+							result[2] = dataa[0] & !dataa[1] & datab[0];
+
+						ELSE GENERATE
+							adder.dataa[WIDTHA-1..0] = !dataa[] & datab[0];
+							adder.dataa[WIDTHA] = !dataa[WIDTHA-1] & datab[0];
+							adder.datab[0] = datab[0];
+							adder.datab[WIDTHA..1] = GND;
+							result[] = adder.result[];
+						END GENERATE;
+					END GENERATE;
+
+				ELSE GENERATE
+					IF (WIDTHB == 2) & (WIDTHA == 2) GENERATE
+						IF LPM_REPRESENTATION == "UNSIGNED" GENERATE
+							result[0] =   dataa[0] & datab[0];
+							result[1] =  (dataa[1] & datab[0]) $ (dataa[0] & datab[1]);
+							result[2] = ((dataa[1] & datab[0]) & (dataa[0] & datab[1])) $ (dataa[1] & datab[1]);
+							result[3] = ((dataa[1] & datab[0]) & (dataa[0] & datab[1])) & (dataa[1] & datab[1]);
+
+						ELSE GENERATE
+							result[0] =  dataa[0] & datab[0];
+							result[1] = (dataa[1] & datab[0]) $ (!dataa[0] & datab[1]) $ datab[1];
+							result[2] = (dataa[1] & datab[0]) $ (!dataa[1] & datab[1]) $
+										(!dataa[0] & datab[1] # dataa[1] & datab[0] & datab[1]);
+							result[3] = ((dataa[1] & datab[0]) $ (!dataa[1] & datab[1])) $
+										(!dataa[0] & dataa[1] & datab[0] & datab[1] #
+										  dataa[1] & datab[0] & datab[1] # !dataa[0] & !dataa[1] & datab[1]);
+						END GENERATE;
+
+					ELSE GENERATE
+					-- The remaining cases will be handled by a decoder-parallel-adder structure
+						IF ONE_INPUT_IS_CONSTANT == "YES" GENERATE
+							-------------------------------------
+							-- case when one input is constant --
+							-------------------------------------
+							ina_reg[WIDTHA-1..0] = dataa[];
+							IF USED(clock) & (DEC_NEED_CLK == 1) GENERATE
+								romout[][].(clk, clrn) = (clock, !aclr);
+								IF USED(clken) GENERATE
+									romout[][].ena = clken;
+								END GENERATE;
+							END GENERATE;
+
+							-- Perform sign extension or zero padding on datab to
+							-- add the 4 additional bits needed in a 4 x len(datab)
+							-- multiplication. This is neccessary when later we add
+							-- multiples of datab together.
+							IF LPM_REPRESENTATION == "UNSIGNED" GENERATE
+								inb_reg[] = (GND, GND, GND, GND, datab[]);
+							ELSE GENERATE
+								inb_reg[] = (datab[WIDTHB-1], datab[WIDTHB-1],
+											 datab[WIDTHB-1], datab[WIDTHB-1], datab[]);
+							END GENERATE;
+
+							-- Generate nodes that represent the 16 multiples of datab
+							-- The first 8 multiples are shared between signed and unsigned cases:
+							bnodes[0][]  = GND;										--  0 x b
+							bnodes[1][]  = inb_reg[];								--  1 x b
+							bnodes[2][]  = (inb_reg[WIDTHB+2..0], GND);				--  2 x b
+							bnodes[3][]  = bnodes[1][] + bnodes[2][];				--  3 x b
+							bnodes[4][]  = (inb_reg[WIDTHB+1..0], GND, GND);		--  4 x b
+							bnodes[5][]  = bnodes[4][] + bnodes[1][];				--  5 x b
+							bnodes[6][]  = bnodes[4][] + bnodes[2][];				--  6 x b
+							bnodes[7][]  = bnodes[6][] + bnodes[1][];				--  7 x b
+							bnodes[8][]  = (inb_reg[WIDTHB..0], GND, GND, GND);		--  8 x b
+
+							IF LPM_REPRESENTATION == "UNSIGNED" GENERATE
+								-- For the unsigned case, continue with the remaining multiples
+								-- [9-15]xdatab
+								bnodes[9][]  = bnodes[8][]  + bnodes[1][];			--  9 x b
+								bnodes[10][] = bnodes[9][]  + bnodes[1][];			-- 10 x b
+								bnodes[11][] = bnodes[10][] + bnodes[1][];			-- 11 x b
+								bnodes[12][] = bnodes[11][] + bnodes[1][];			-- 12 x b
+								bnodes[13][] = bnodes[12][] + bnodes[1][];			-- 13 x b
+								bnodes[14][] = bnodes[13][] + bnodes[1][];			-- 14 x b
+								bnodes[15][] = bnodes[14][] + bnodes[1][];			-- 15 x b
+
+								-- In the unsigned case, all lookup tables are identical ...
+								nodes_mslut[][] = bnodes[][];
+
+							ELSE GENERATE
+								-- In the signed case, the lookup table for the chunk containing
+								-- the sign bit of dataa is different from the other (middle bits)
+								-- ones and, thus, one has to generate the negative multiples of
+								-- datab for that lookup table. Also, if middle bits exist,
+								-- one has to generate the "unsigned" lookup tables as well.
+								nodes_mslut[7..0][] = bnodes[7..0][];
+
+								nodes_mslut[8][]  = 0 - bnodes[8][];				-- -8 x b
+								nodes_mslut[9][]  = 0 - bnodes[7][];				-- -7 x b
+								nodes_mslut[10][] = 0 - bnodes[6][];				-- -6 x b
+								nodes_mslut[11][] = 0 - bnodes[5][];				-- -5 x b
+								nodes_mslut[12][] = 0 - bnodes[4][];				-- -4 x b
+								nodes_mslut[13][] = 0 - bnodes[3][];				-- -3 x b
+								nodes_mslut[14][] = 0 - bnodes[2][];				-- -2 x b
+								nodes_mslut[15][] = 0 - bnodes[1][]; 				-- -1 x b
+
+								IF BLOCKS > 1 GENERATE
+									bnodes[9][]  = bnodes[8][]  + bnodes[1][];		--  9 x b
+									bnodes[10][] = bnodes[9][]  + bnodes[1][];		-- 10 x b
+									bnodes[11][] = bnodes[10][] + bnodes[1][];		-- 11 x b
+									bnodes[12][] = bnodes[11][] + bnodes[1][];		-- 12 x b
+									bnodes[13][] = bnodes[12][] + bnodes[1][];		-- 13 x b
+									bnodes[14][] = bnodes[13][] + bnodes[1][];		-- 14 x b
+									bnodes[15][] = bnodes[14][] + bnodes[1][];		-- 15 x b
+								END GENERATE;
+							END GENERATE;
+
+							-- romout[I][] nodes are placeholders for outputs of the "I"th
+							-- lookup table. These nodes will eventually get connected to
+							-- corresponding data ports of the parallel adder. Note that
+							-- a 4-bit chunk of dataa is addressing (looking up) its
+							-- corresponding lookup table.
+							IF BLOCKS > 1 GENERATE
+								FOR I IN 0 TO BLOCKS-2 GENERATE
+									CASE ina_reg[(i+1)*4-1..i*4] IS
+										WHEN  0 => romout[i][] = bnodes[0][];
+										WHEN  1 => romout[i][] = bnodes[1][];
+										WHEN  2 => romout[i][] = bnodes[2][];
+										WHEN  3 => romout[i][] = bnodes[3][];
+										WHEN  4 => romout[i][] = bnodes[4][];
+										WHEN  5 => romout[i][] = bnodes[5][];
+										WHEN  6 => romout[i][] = bnodes[6][];
+										WHEN  7 => romout[i][] = bnodes[7][];
+										WHEN  8 => romout[i][] = bnodes[8][];
+										WHEN  9 => romout[i][] = bnodes[9][];
+										WHEN 10 => romout[i][] = bnodes[10][];
+										WHEN 11 => romout[i][] = bnodes[11][];
+										WHEN 12 => romout[i][] = bnodes[12][];
+										WHEN 13 => romout[i][] = bnodes[13][];
+										WHEN 14 => romout[i][] = bnodes[14][];
+										WHEN 15 => romout[i][] = bnodes[15][];
+									END CASE;
+								END GENERATE;
+							END GENERATE;
+
+							-- This section is dealing with the last (leftmost) chunk of dataa which,
+							-- for signed cases, contains the sign bit as well and thus needs special
+							-- attention. First, if the chunk is not a 4-bit one, sign extend or
+							-- zero-pad it. Second, use the signed lookup table in unsigned cases.
+							ina_reg_clkd[WIDTHA-(BLOCKS-1)*4-1..0] = ina_reg[WIDTHA-1..(BLOCKS-1)*4];
+							IF (WIDTHA MOD 4) != 0 GENERATE
+								IF LPM_REPRESENTATION == "UNSIGNED" GENERATE
+									ina_reg_clkd[3..WIDTHA-1-(BLOCKS-1)*4] = GND;
+								ELSE GENERATE
+									ina_reg_clkd[3..WIDTHA-1-(BLOCKS-1)*4] = ina_reg[WIDTHA-1];
+								END GENERATE;
+							END GENERATE;
+
+							CASE ina_reg_clkd[] IS
+								WHEN  0 => romout[BLOCKS-1][] = nodes_mslut[0][];
+								WHEN  1 => romout[BLOCKS-1][] = nodes_mslut[1][];
+								WHEN  2 => romout[BLOCKS-1][] = nodes_mslut[2][];
+								WHEN  3 => romout[BLOCKS-1][] = nodes_mslut[3][];
+								WHEN  4 => romout[BLOCKS-1][] = nodes_mslut[4][];
+								WHEN  5 => romout[BLOCKS-1][] = nodes_mslut[5][];
+								WHEN  6 => romout[BLOCKS-1][] = nodes_mslut[6][];
+								WHEN  7 => romout[BLOCKS-1][] = nodes_mslut[7][];
+								WHEN  8 => romout[BLOCKS-1][] = nodes_mslut[8][];
+								WHEN  9 => romout[BLOCKS-1][] = nodes_mslut[9][];
+								WHEN 10 => romout[BLOCKS-1][] = nodes_mslut[10][];
+								WHEN 11 => romout[BLOCKS-1][] = nodes_mslut[11][];
+								WHEN 12 => romout[BLOCKS-1][] = nodes_mslut[12][];
+								WHEN 13 => romout[BLOCKS-1][] = nodes_mslut[13][];
+								WHEN 14 => romout[BLOCKS-1][] = nodes_mslut[14][];
+								WHEN 15 => romout[BLOCKS-1][] = nodes_mslut[15][];
+							END CASE;
+
+							-- Connecting the outputs of lookup tables to the parallel adder
+							IF !USED(clock) & !((FAMILY_STRATIX() == 1) & USE_CARRY_CHAINS()) GENERATE
+
+								IF LPM_REPRESENTATION == "UNSIGNED" GENERATE
+									padder.data[0][WIDTHB+4-1..0] = romout[0][];
+
+									IF BLOCKS > 1 GENERATE
+										padder.data[0][EXT_FULL_WIDTHR-1..WIDTHB+4] = GND;
+										IF BLOCKS > 2 GENERATE
+											FOR I IN 1 TO BLOCKS-2 GENERATE
+												padder.data[I][4*I-1..0] = GND;
+												padder.data[I][4*I+WIDTHB+4-1..4*I] = romout[I][];
+												padder.data[I][EXT_FULL_WIDTHR-1..4*I+WIDTHB+4] = GND;
+											END GENERATE;
+										END GENERATE;
+
+										padder.data[BLOCKS-1][4*(BLOCKS-1)-1..0] = GND;
+										padder.data[BLOCKS-1][EXT_FULL_WIDTHR-1..4*(BLOCKS-1)] = romout[BLOCKS-1][];
+									END GENERATE;
+
+								ELSE GENERATE
+									padder.data[0][WIDTHB+4-1..0] = romout[0][];
+
+									IF BLOCKS > 1 GENERATE
+										padder.data[0][EXT_FULL_WIDTHR-1..WIDTHB+4] = romout[0][WIDTHB+4-1];
+										IF BLOCKS > 2 GENERATE
+											FOR I IN 1 TO BLOCKS-2 GENERATE
+												padder.data[I][4*I-1..0] = GND;
+												padder.data[I][4*I+WIDTHB+4-1..4*I] = romout[I][];
+												padder.data[I][EXT_FULL_WIDTHR-1..4*I+WIDTHB+4] = romout[I][WIDTHB+4-1];
+											END GENERATE;
+										END GENERATE;
+
+										padder.data[BLOCKS-1][4*(BLOCKS-1)-1..0] = GND;
+										padder.data[BLOCKS-1][4*(BLOCKS-1)+WIDTHB+4-1..4*(BLOCKS-1)] = romout[BLOCKS-1][];
+									END GENERATE;
+
+								END GENERATE;
+
+							ELSE GENERATE
+								FOR I IN 0 TO BLOCKS-1 GENERATE
+									padder.data[I][] = romout[I][];
+									IF USED(clock) GENERATE
+										padder.(clk, aclr) = (clock, aclr);
+
+										IF USED(clken) GENERATE
+											padder.clken = clken;
+										END GENERATE;
+									END GENERATE;
+								END GENERATE;
+							END GENERATE;
+							result[] = padder.result[FULL_WIDTHR-1..0];
+
+						ELSE GENERATE
+							-----------------------------------------
+							-- Case when one input is not constant --
+							-----------------------------------------
+							-- other cases
+							IF !((FAMILY_STRATIX() == 1) & USE_CARRY_CHAINS() &
+								((LPM_REPRESENTATION == "SIGNED" & MAXIMIZE_SPEED < 9) #
+								 (LPM_REPRESENTATION == "UNSIGNED" & MAXIMIZE_SPEED < 6))) GENERATE
+								------------------------------
+								--  Decoder stage connections
+								------------------------------
+								IF LPM_REPRESENTATION == "UNSIGNED" GENERATE
+									FOR I IN 0 TO WIDTHB-1 GENERATE
+										decoder_node[I][] = dataa[] & datab[I];
+									END GENERATE;
+
+								ELSE GENERATE
+									FOR I IN 0 TO WIDTHB-2 GENERATE
+										decoder_node[I][] = dataa[] & datab[I];
+									END GENERATE;
+
+									decoder_node[WIDTHB-1][] = !dataa[] & datab[WIDTHB-1];
+								END GENERATE;
+
+								IF USED(clock) & (DEC_NEED_CLK == 1) GENERATE
+									decoder_node[][].(clk, clrn) = (clock, !aclr);
+									IF USED(clken) GENERATE
+										decoder_node[][].ena = clken;
+									END GENERATE;
+								END GENERATE;
+
+								----------------------------------------------------------
+								--  Connecting outputs of decoder stage to the parallel adder
+								----------------------------------------------------------
+								IF !USED(clock) & !((FAMILY_STRATIX() == 1) &
+									USE_CARRY_CHAINS()) GENERATE
+
+									IF LPM_REPRESENTATION == "UNSIGNED" GENERATE
+										-- These cases use the CSA-based adder scheme.
+										padder.data[0][WIDTHA-1..0] = decoder_node[0][];
+										padder.data[0][FULL_WIDTHR-1..WIDTHA] = GND;
+
+										IF WIDTHB > 1 GENERATE
+											IF WIDTHB > 2 GENERATE
+												FOR I IN 1 TO WIDTHB-2 GENERATE
+													padder.data[I][I-1..0] = GND;
+													padder.data[I][I+WIDTHA-1..I] = decoder_node[I][];
+													padder.data[I][FULL_WIDTHR-1..I+WIDTHA] = GND;
+												END GENERATE;
+											END GENERATE;
+
+											padder.data[WIDTHB-1][WIDTHB-2..0] = GND;
+											padder.data[WIDTHB-1][FULL_WIDTHR-2..WIDTHB-1] =
+																			decoder_node[WIDTHB-1][];
+											padder.data[WIDTHB-1][FULL_WIDTHR-1] = GND;
+										END GENERATE;
+
+									ELSE GENERATE
+										padder.data[0][WIDTHA-1..0] = decoder_node[0][];
+										padder.data[0][FULL_WIDTHR-1..WIDTHA] =
+																			decoder_node[0][WIDTHA-1];
+
+										IF WIDTHB > 1 GENERATE
+											IF WIDTHB > 2 GENERATE
+												FOR I IN 1 TO WIDTHB-2 GENERATE
+													padder.data[I][I-1..0] = GND;
+													padder.data[I][I+WIDTHA-1..I] = decoder_node[I][];
+													padder.data[I][FULL_WIDTHR-1..I+WIDTHA] =
+																			decoder_node[I][WIDTHA-1];
+												END GENERATE;
+											END GENERATE;
+
+											padder.data[WIDTHB-1][WIDTHB-2..0] = GND;
+											padder.data[WIDTHB-1][FULL_WIDTHR-2..WIDTHB-1] =
+																			decoder_node[WIDTHB-1][];
+											padder.data[WIDTHB-1][FULL_WIDTHR-1] = decoder_node[WIDTHB-1][WIDTHA-1];
+
+											padder.data[WIDTHB][WIDTHB-2..0] = GND;
+											padder.data[WIDTHB][WIDTHB-1] = datab[WIDTHB-1];
+											padder.data[WIDTHB][FULL_WIDTHR-1..WIDTHB] = GND;
+
+										END GENERATE;
+									END GENERATE;
+
+								ELSE GENERATE
+									-- All remaining cases use the FLEX/FAST CPA_based parallel adder scheme.
+									IF LPM_REPRESENTATION == "UNSIGNED" GENERATE
+										FOR I IN 0 TO WIDTHB-1 GENERATE
+											padder.data[I][WIDTHA-1..0] = decoder_node[I][];
+										END GENERATE;
+
+										IF USED(clock) GENERATE
+											padder.(clk, aclr) = (clock, aclr);
+											IF USED(clken) GENERATE
+												padder.clken = clken;
+											END GENERATE;
+										END GENERATE;
+
+									ELSE GENERATE
+										FOR I IN 0 TO WIDTHB-1 GENERATE
+											padder.data[I][WIDTHA-1..0] = decoder_node[I][];
+										END GENERATE;
+
+										sign_ff = datab[WIDTHB-1];
+										padder.cin = sign_ff;
+
+										IF USED(clock) GENERATE
+											padder.(clk, aclr) = (clock, aclr);
+											IF USED(clken) GENERATE
+												padder.clken = clken;
+											END GENERATE;
+
+											IF DEC_NEED_CLK == 1 GENERATE
+												sign_ff.(clk, clrn) =  (clock, !aclr);
+												IF USED(clken) GENERATE
+													sign_ff.ena = clken;
+												END GENERATE;
+											END GENERATE;
+										END GENERATE;
+									END GENERATE;
+								END GENERATE;
+
+								result[] = padder.result[FULL_WIDTHR-1..0];
+
+							ELSE GENERATE
+								------------------------------------------------------------------------
+								-- Special case of FLEX_FAST/SIGNED uses Booth decoding algorithms
+								------------------------------------------------------------------------
+								IF (LPM_REPRESENTATION == "SIGNED" & MAXIMIZE_SPEED > 5 & MAXIMIZE_SPEED < 9) GENERATE
+								-- Check for WIDTHB = 1. If a single bit multiplier, sign-extend it
+									IF (WIDTHB > 1) GENERATE
+										select_group_node[0][] = (datab[1], datab[0], GND);
+										pp_carry_node[0] = datab[1];
+									ELSE GENERATE
+										select_group_node[0][] = (datab[0], datab[0], GND);
+										pp_carry_node[0] = datab[0];
+									END GENERATE;
+
+									-- By Booth decoding algorithm, the leftmost decoding 3-bit has a (b1, b0, 0) form.
+									-- Apply the decoding on all bits of dataa
+									partial_product_node[0][0] = mul_lfrg ((dataa[0], GND), select_group_node[0][])
+																	WITH (WIDTH = 1,
+																		  BIT0_OF_SELECT_IS_GND = "TRUE",
+																		  BIT0_OF_DATA_IS_GND = "TRUE");
+
+									IF (WIDTHA > 1) GENERATE
+										mul_lfrg_first_mod.data[][1] = dataa[WIDTHA-1..1];
+										mul_lfrg_first_mod.data[][0] = dataa[WIDTHA-2..0];
+										mul_lfrg_first_mod.select[][2..0] = select_group_node[0][];
+										partial_product_node[0][WIDTHA-1..1] = mul_lfrg_first_mod.out_bit[];
+									END GENERATE;
+
+									partial_product_node[0][WIDTHA] = mul_lfrg ((dataa[WIDTHA-1],
+																					 dataa[WIDTHA-1]),
+																					select_group_node[0][])
+																	WITH (WIDTH = 1,
+																		  BIT0_OF_SELECT_IS_GND = "TRUE",
+																		  INPUTS_ARE_IDENTICAL = "TRUE");
+
+									-- Next, the full 3-bit decoding group (b[i], b[i-1], b[i-2])
+									IF (FULL_SELECT_GROUP_NUM > 0) GENERATE
+										FOR I IN 1 TO FULL_SELECT_GROUP_NUM GENERATE
+											select_group_node[I][] = (datab[2*(I+1)-1], datab[2*(I+1)-2], datab[2*(I+1)-3]);
+											pp_carry_node[I] = datab[2*(I+1)-1] & !(datab[2*(I+1)-2] & datab[2*(I+1)-3]);
+
+											partial_product_node[I][0] = mul_lfrg ((dataa[0], GND),
+																				   select_group_node[I][])
+																		WITH (WIDTH = 1,
+																			  BIT0_OF_DATA_IS_GND = "TRUE");
+
+											IF (WIDTHA > 1) GENERATE
+												mul_lfrg_mid_mod[I].data[][1] = dataa[WIDTHA-1..1];
+												mul_lfrg_mid_mod[I].data[][0] = dataa[WIDTHA-2..0];
+												mul_lfrg_mid_mod[I].select[][2..0] = select_group_node[I][];
+												partial_product_node[I][WIDTHA-1..1] = mul_lfrg_mid_mod[I].out_bit[];
+											END GENERATE;
+
+											partial_product_node[I][WIDTHA] = mul_lfrg ((dataa[WIDTHA-1],
+																							 dataa[WIDTHA-1]),
+																							select_group_node[I][])
+																		WITH (WIDTH = 1,
+																			  BIT0_OF_DATA_IS_GND = "FALSE",
+																			  BIT0_OF_SELECT_IS_GND = "FALSE",
+																			  BIT2_OF_SELECT_IS_SIGN_EXT = "FALSE",
+																			  INPUTS_ARE_IDENTICAL = "TRUE");
+										END GENERATE;
+									END GENERATE;
+
+									-- Finally, if WIDTHB is odd, we're left with a single last bit of datab. Will
+									-- sign-extend datab and make a full 3-bit decoding group
+									-- (b[WIDTHB-1], b[WIDTHB-1], b[WIDTHB-2])
+									IF (RIGHT_PARTIAL_SELECT_GROUP_NUM > 0) GENERATE
+										select_group_node[TOTAL_PP_NUM-1][] = (datab[WIDTHB-1], datab[WIDTHB-1],
+																			   datab[WIDTHB-2]);
+										pp_carry_node[TOTAL_PP_NUM-1] = datab[WIDTHB-1] & !datab[WIDTHB-2];
+
+										partial_product_node [TOTAL_PP_NUM-1][0] = mul_lfrg ((dataa[0], GND),
+																				select_group_node[TOTAL_PP_NUM-1][])
+																		WITH (WIDTH = 1,
+																			  BIT0_OF_DATA_IS_GND = "TRUE",
+																			  BIT2_OF_SELECT_IS_SIGN_EXT = "TRUE");
+										IF (WIDTHA > 1) GENERATE
+											mul_lfrg_last_mod.data[][1] = dataa[WIDTHA-1..1];
+											mul_lfrg_last_mod.data[][0] = dataa[WIDTHA-2..0];
+											mul_lfrg_last_mod.select[][2..0] = select_group_node[TOTAL_PP_NUM-1][];
+											partial_product_node [TOTAL_PP_NUM-1][WIDTHA-1..1] = mul_lfrg_last_mod.out_bit[];
+
+											partial_product_node[TOTAL_PP_NUM-1][WIDTHA] = mul_lfrg ((dataa[WIDTHA-1],
+																									 dataa[WIDTHA-1]),
+																					select_group_node[TOTAL_PP_NUM-1][])
+																		WITH (WIDTH = 1,
+																			  BIT2_OF_SELECT_IS_SIGN_EXT = "TRUE",
+																			  INPUTS_ARE_IDENTICAL = "TRUE");
+										END GENERATE;
+									END GENERATE;
+
+									IF USED(clock) & (BOOTH_DEC_NEED_CLK == 1) GENERATE
+										partial_product_node[][].(clk, clrn) = (clock, !aclr);
+										pp_carry_node[].(clk, clrn) = (clock, !aclr);
+
+										IF USED(clken) GENERATE
+											partial_product_node[][].ena = clken;
+											pp_carry_node[].ena = clken;
+										END GENERATE;
+									END GENERATE;
+
+								ELSE GENERATE
+									--------------------------------------------------------
+									-- New algorithm
+									--------------------------------------------------------
+									IF (OP_MODE == 0) GENERATE
+										dataa_reg_node[] = dataa[];
+										a_node[WIDTHA+1..0] = (dataa_reg_node[WIDTHA-1], dataa_reg_node[], GND);
+										b_node[] = datab[];
+
+										-- Check for WIDTHB = 1. If a single bit multiplier, sign-extend it
+										IF (WIDTHB > 1) GENERATE
+											select_group_node[0][] = (b_node[1], b_node[0], GND);
+											pp_carry_reg_reg_node[0] = b_node[1];
+										ELSE GENERATE
+											select_group_node[0][] = (b_node[0], b_node[0], GND);
+											pp_carry_reg_reg_node[0] = b_node[0];
+										END GENERATE;
+
+										IF (TOTAL_PP_NUM > 1) GENERATE
+											booth_enc.b[0][] = select_group_node[0][];
+											pp_carry_reg_reg_node[0] = booth_enc.booth_cout[0];
+											booth_enc.cin[0] = GND;
+											sel_node[1..0] = booth_enc.sel[0][1..0];
+
+											-- Next, the full 3-bit decoding group (b[i], b[i-1], b[i-2])
+											IF (MOD_BOOTH_TOT_NORM_NUM > 1) GENERATE
+												FOR I IN 1 TO MOD_BOOTH_TOT_NORM_NUM-1 GENERATE
+													select_group_node[I][] = (b_node[2*(I+1)-1], b_node[2*(I+1)-2], b_node[2*(I+1)-3]);
+													booth_enc.b[I][] = select_group_node[I][];
+													pp_carry_reg_reg_node[I] = booth_enc.booth_cout[I];
+													booth_enc.cin[I] = booth_enc.cout[I-1];
+													sel_node[2*I+1..2*I] = booth_enc.sel[I][1..0];
+												END GENERATE;
+											END GENERATE;
+
+											FOR I IN 0 TO MOD_BOOTH_TOT_NORM_NUM-1 GENERATE
+												FOR J IN 0 TO WIDTHA GENERATE
+													partial_product_node[I][J] = !((sel_node[2*I] & ((a_node[J+1] & !sel_node[2*I+1]) #
+																				  (!a_node[J] & sel_node[2*I+1]))) #
+																				  (!sel_node[2*I] & sel_node[2*I+1] & !a_node[J+1]));
+												END GENERATE;
+											END GENERATE;
+										END GENERATE;
+
+										IF (RIGHT_PARTIAL_SELECT_GROUP_NUM > 0) GENERATE
+											select_group_node[TOTAL_PP_NUM-1][] = (b_node[WIDTHB-1], b_node[WIDTHB-1],
+																				   b_node[WIDTHB-2]);
+										ELSE GENERATE
+											IF (TOTAL_PP_NUM > 1) GENERATE
+												select_group_node[TOTAL_PP_NUM-1][] = (b_node[WIDTHB-1], b_node[WIDTHB-2],
+																					   b_node[WIDTHB-3]);
+											ELSE GENERATE
+												select_group_node[TOTAL_PP_NUM-1][] = (b_node[WIDTHB-1], b_node[WIDTHB-2],
+																					   GND);
+											END GENERATE;
+
+										END GENERATE;
+
+										msb_booth_enc.b[0][] = select_group_node[TOTAL_PP_NUM-1][];
+										msb_sel_node[] = msb_booth_enc.sel[0][];
+										pp_carry_reg_reg_node[TOTAL_PP_NUM-1] = msb_booth_enc.booth_cout[0];
+
+										IF (TOTAL_PP_NUM > 1) GENERATE
+											msb_booth_enc.cin[0] = booth_enc.cout[MOD_BOOTH_TOT_NORM_NUM-1];
+										ELSE GENERATE
+											msb_booth_enc.cin[0] = GND;
+										END GENERATE;
+
+										partial_product_node [TOTAL_PP_NUM-1][0] = mul_lfrg((a_node[1], a_node[0]), msb_sel_node[])
+																						WITH (WIDTH = 1,
+																							  BIT0_OF_DATA_IS_GND = "TRUE");
+
+										IF (WIDTHA > 1) GENERATE
+											mul_lfrg_last_mod.data[][1] = a_node[WIDTHA..2];
+											mul_lfrg_last_mod.data[][0] = a_node[WIDTHA-1..1];
+											mul_lfrg_last_mod.select[][2..0] = msb_sel_node[];
+											partial_product_node [TOTAL_PP_NUM-1][WIDTHA-1..1] = mul_lfrg_last_mod.out_bit[];
+										END GENERATE;
+
+										partial_product_node [TOTAL_PP_NUM-1][WIDTHA] = mul_lfrg ((a_node[WIDTHA+1], a_node[WIDTHA]),
+																										msb_sel_node[])
+																						WITH (WIDTH = 1,
+																							  BIT0_OF_DATA_IS_GND = "FALSE",
+																							  BIT0_OF_SELECT_IS_GND = "FALSE",
+																							  BIT2_OF_SELECT_IS_SIGN_EXT = "FALSE",
+																							  INPUTS_ARE_IDENTICAL = "TRUE");
+
+										pp_carry_reg_node[] = pp_carry_reg_reg_node[];
+										pp_carry_node[] = pp_carry_reg_node[];
+
+									ELSE GENERATE
+										---------------------------------------------------------
+										-- New algorithm for smaller-area unsigned multipliers
+										---------------------------------------------------------
+										-------------------------------------------------------
+										-- 			Inputs MSB extension
+										-------------------------------------------------------
+										-- unsigned cases have two 0's at MSB which cause warning when registered
+										dataa_reg_node[] = dataa[];
+										a_node[WIDTHA..0] = (dataa_reg_node[], GND);
+										IF (EFV_WIDTHA > WIDTHA) GENERATE
+											IF (LPM_REPRESENTATION == "UNSIGNED") GENERATE
+												a_node[EFV_WIDTHA+1..WIDTHA+1] = GND;
+											ELSE GENERATE
+												a_node[EFV_WIDTHA+1..WIDTHA+1] = dataa_reg_node[WIDTHA-1];
+											END GENERATE;
+										END GENERATE;
+
+										b_node[WIDTHB-1..0] = datab[];
+										IF (EFV_WIDTHB > WIDTHB) GENERATE
+											IF (EFV_WIDTHB > WIDTHB) GENERATE
+												b_node[EFV_WIDTHB-1..WIDTHB] = GND;
+											END GENERATE;
+										END GENERATE;
+
+										-------------------------------------------------------
+										--       	Multiplier (datab) input recoding logic
+										-------------------------------------------------------
+										select_group_node[0][] = (b_node[1], b_node[0], GND);
+										booth_enc.b[0][] = select_group_node[0][];
+										booth_enc.cin[0] = GND;
+										sel_node[1..0] = booth_enc.sel[0][1..0];
+
+										-- Next, the full 3-bit decoding group (b_node[i], b_node[i-1], b_node[i-2])
+										-- In this algorithm, b_node[i-2] is essentially forced to GND
+										IF (TOTAL_PP_NUM > 1) GENERATE
+											pp_carry_reg_reg_node[0] = booth_enc.booth_cout[0];
+
+											FOR I IN 1 TO TOTAL_PP_NUM-1 GENERATE
+												select_group_node[I][] = (b_node[2*I+1], b_node[2*I], GND);
+												booth_enc.b[I][] = select_group_node[I][];
+
+												IF (OP_MODE == 3) # (I < TOTAL_PP_NUM-1) GENERATE
+													pp_carry_reg_reg_node[I] = booth_enc.booth_cout[I];
+												END GENERATE;
+
+												sel_node[2*I+1..2*I] = booth_enc.sel[I][1..0];
+											END GENERATE;
+										END GENERATE;
+
+										-------------------------------------------------------
+										-- 			Partial product generation logic
+										-------------------------------------------------------
+										FOR I IN 0 TO TOTAL_PP_NUM-1 GENERATE
+											FOR J IN 0 TO EFV_WIDTHA GENERATE
+												IF (OP_MODE == 2 # OP_MODE == 3) GENERATE
+													partial_product_node[I][J] = (!((!sel_node[2*I+1] &  sel_node[2*I] & a_node[J+1]) #
+																					(sel_node[2*I+1]  & !sel_node[2*I] & !a_node[J])   #
+																					(sel_node[2*I+1]  &  sel_node[2*I] & !a_node[J+1])));
+												ELSE GENERATE
+													partial_product_node[I][J] = (!((!sel_node[2*I+1] &  sel_node[2*I] & a_node[J+1]) #
+																					(sel_node[2*I+1]  & !sel_node[2*I] & a_node[J])   #
+																					(sel_node[2*I+1]  &  sel_node[2*I] & !a_node[J+1])));
+												END GENERATE;
+											END GENERATE;
+										END GENERATE;
+
+										-------------------------------------------------------
+										-- 			Extended Booth carry generation logic
+										-------------------------------------------------------
+										IF (TOTAL_PP_NUM > 1) GENERATE
+											pp_carry_reg_node[] = pp_carry_reg_reg_node[];
+
+											IF (OP_MODE == 3) GENERATE
+												pp_carry_node[] = pp_carry_reg_node[];
+											ELSE GENERATE
+												pp_carry_node[] = (GND, pp_carry_reg_node[]);
+											END GENERATE;
+										ELSE GENERATE
+											IF (OP_MODE == 3) GENERATE
+												pp_carry_node[0] = pp_carry_reg_node[0];
+											ELSE GENERATE
+												pp_carry_node[0] = GND;
+											END GENERATE;
+										END GENERATE;
+
+										-------------------------------------------------------------------
+										-- 		Registering of the encoder and partial products/carries
+										-------------------------------------------------------------------
+										IF USED(clock) & (BOOTH_MULBOOTHC_NEED_CLK == 1) GENERATE
+											booth_enc.(clock, aclr) = (clock, aclr);
+											dataa_reg_node[].(clk, clrn) = (clock, !aclr);
+
+											IF USED(clken) GENERATE
+												booth_enc.clken = clken;
+												dataa_reg_node[].ena = clken;
+											END GENERATE;
+										END GENERATE;
+									END GENERATE;
+
+									IF USED(clock) & (BOOTH_DEC_NEED_CLK == 1) GENERATE
+										partial_product_node[][].(clk, clrn) = (clock, !aclr);
+										pp_carry_reg_node[].(clk, clrn) = (clock, !aclr);
+
+										IF USED(clken) GENERATE
+											partial_product_node[][].ena = clken;
+											pp_carry_reg_node[].ena = clken;
+										END GENERATE;
+									END GENERATE;
+								END GENERATE;
+
+								---------------------------------------------------------------
+								-- Connecting Booth decoder outputs to the parallel adder
+								---------------------------------------------------------------
+								IF (EFV_WIDTHA+2 >= 2*TOTAL_PP_NUM) GENERATE
+									--------------------------------------------
+									-- Case I: Odd number of partial products
+									--------------------------------------------
+									IF (TOTAL_PP_NUM MOD 2 > 0) GENERATE
+										carry_vector_node[1..0] = GND;
+
+										IF (TOTAL_PP_NUM > 1) GENERATE
+											FOR I IN 1 TO TOTAL_PP_NUM-1 GENERATE
+												carry_vector_node[2*I] = pp_carry_node[I-1];
+												carry_vector_node[2*I+1] = GND;
+											END GENERATE;
+										END GENERATE;
+
+										carry_vector_node[2*TOTAL_PP_NUM] = pp_carry_node[TOTAL_PP_NUM-1];
+
+										IF (EFV_WIDTHA+1 > 2*TOTAL_PP_NUM) GENERATE
+											carry_vector_node[EFV_WIDTHA+1..2*TOTAL_PP_NUM+1] = GND;
+										END GENERATE;
+
+										-- Connecting to the parallel adder
+										-- Note: Have to have a rightmost 0 for carry_vector_node[] to
+										-- make sure it will not be incorrectly sign-extended
+										-- by the parallel adder when WIDTHA+1 == 2*TOT_PP_NUM.
+										FOR I IN 1 TO TOTAL_PP_NUM GENERATE
+											padder.data[I][] = (!partial_product_node[I-1][EFV_WIDTHA],
+																!partial_product_node[I-1][EFV_WIDTHA],
+																!partial_product_node[I-1][]);
+										END GENERATE;
+
+										padder.data[0][] = (GND, carry_vector_node[]);
+										result[] = padder.result [FULL_WIDTHR+1..2];
+									ELSE GENERATE
+										--------------------------------------------
+										-- Case II: Even number of partial products
+										--------------------------------------------
+										padder.data[0][] = (!partial_product_node[0][EFV_WIDTHA],
+															!partial_product_node[0][],
+															GND, GND);
+
+										FOR I IN 1 TO TOTAL_PP_NUM-1 GENERATE
+											padder.data[I][] = (!partial_product_node[I][EFV_WIDTHA],
+																!partial_product_node[I][],
+																GND, pp_carry_node[I-1]);
+										END GENERATE;
+										padder.cin = pp_carry_node[TOTAL_PP_NUM-1];
+										result[] = padder.result [FULL_WIDTHR+1..2];
+
+									END GENERATE;
+								ELSE GENERATE
+									FOR I IN 0 TO TOTAL_PP_NUM-1 GENERATE
+										carry_vector_node[2*I] = pp_carry_node[I];
+										carry_vector_node[2*I+1] = GND;
+									END GENERATE;
+									carry_vector_node[FULL_WIDTHR-1..2*TOTAL_PP_NUM] = GND;
+
+									FOR I IN 0 TO TOTAL_PP_NUM-1 GENERATE
+										padder.data[I][] = (!partial_product_node[I][EFV_WIDTHA],
+															!partial_product_node[I][]);
+									END GENERATE;
+
+									(result[], , ) = lpm_add_sub (GND, padder.result [FULL_WIDTHR-1..0],
+																	carry_vector_node[], , , )
+													WITH (LPM_WIDTH = FULL_WIDTHR,
+														  LPM_REPRESENTATION = "SIGNED");
+								END GENERATE;
+
+								IF USED(clock) GENERATE
+									padder.(clk, aclr) = (clock, aclr);
+									IF USED(clken) GENERATE
+										padder.clken = clken;
+									END GENERATE;
+								END GENERATE;
+
+							END GENERATE;
+						END GENERATE;
+					END GENERATE;
+				END GENERATE;
+			END GENERATE;
+
+		ELSE GENERATE
+			----------------------------------------------
+			-- 			EABS-based Implementation 		--
+			----------------------------------------------
+			-- If have more than OPT_WIDTHA bits, then we have full groups
+			-- of OPT_WIDTHA bits each. In these cases, we always need more than
+			-- one EAB and thus OPT_A_WIDTH will be either 4 or 8.
+			IF A_BLOCKS > 1 GENERATE
+				FOR I IN 0 TO A_BLOCKS-2 GENERATE
+					multer[I].dataa[] = dataa[(I+1)*OPT_WIDTHA-1..I*OPT_WIDTHA];
+					multer[I].datab[] = datab[];
+				END GENERATE;
+			END GENERATE;
+
+			-- The last remaining bit group (possibly less than OPT_WIDTHA bits). This
+			-- case also handles the odd-shaped multipliers by using a non-4/8 size for
+			-- OPT_A_WIDTH. Note that the parallel_adder handles "single-input" cases
+			-- as well and simply bypasses the input to its output. This reduces our
+			-- hassle of taking care of the special case of a single EAB with no
+			-- parallel_adder needed.
+			last_multer.dataa[] = dataa[WIDTHA-1..WIDTHA-REM_A_BITS];
+			last_multer.datab[] = datab[];
+
+			-- Connecting the outputs of EAB lookup tables to the parallel adder
+			-- If CSA adders are used, sign extensions will be performed. Else, direct
+			-- connections to inputs of the parallel adder are made.
+			IF !USED(clock) & !(FAMILY_HAS_EAB() == 1 & USE_CARRY_CHAINS()) GENERATE
+				IF LPM_REPRESENTATION == "UNSIGNED" GENERATE
+
+					IF A_BLOCKS > 1 GENERATE
+						par_adder.data[0][WIDTHB+OPT_WIDTHA-1..0] = multer[0].result[WIDTHB+OPT_WIDTHA-1..0];
+						par_adder.data[0][EAB_EXT_FULL_WIDTHR-1..WIDTHB+OPT_WIDTHA] = GND;
+						IF A_BLOCKS > 2 GENERATE
+							FOR I IN 1 TO A_BLOCKS-2 GENERATE
+								par_adder.data[I][OPT_WIDTHA*I-1..0] = GND;
+								par_adder.data[I][OPT_WIDTHA*I+WIDTHB+OPT_WIDTHA-1..OPT_WIDTHA*I] = multer[I].result[WIDTHB+OPT_WIDTHA-1..0];
+								par_adder.data[I][EAB_EXT_FULL_WIDTHR-1..OPT_WIDTHA*I+WIDTHB+OPT_WIDTHA] = GND;
+							END GENERATE;
+						END GENERATE;
+						par_adder.data[A_BLOCKS-1][OPT_WIDTHA*(A_BLOCKS-1)-1..0] = GND;
+					END GENERATE;
+
+					par_adder.data[A_BLOCKS-1][WIDTHB+REM_A_BITS+OPT_WIDTHA*(A_BLOCKS-1)-1..OPT_WIDTHA*(A_BLOCKS-1)] =
+												last_multer.result[];
+					IF REM_A_BITS < OPT_WIDTHA GENERATE
+						par_adder.data[A_BLOCKS-1][EAB_EXT_FULL_WIDTHR-1..WIDTHB+REM_A_BITS+OPT_WIDTHA*(A_BLOCKS-1)] = GND;
+					END GENERATE;
+
+				ELSE GENERATE
+
+					IF A_BLOCKS > 1 GENERATE
+						par_adder.data[0][WIDTHB+OPT_WIDTHA-1..0] = multer[0].result[WIDTHB+OPT_WIDTHA-1..0];
+						par_adder.data[0][EAB_EXT_FULL_WIDTHR-1..WIDTHB+OPT_WIDTHA] = multer[0].result[WIDTHB+OPT_WIDTHA-1];
+						IF A_BLOCKS > 2 GENERATE
+							FOR I IN 1 TO A_BLOCKS-2 GENERATE
+								par_adder.data[I][OPT_WIDTHA*I-1..0] = GND;
+								par_adder.data[I][OPT_WIDTHA*I+WIDTHB+OPT_WIDTHA-1..OPT_WIDTHA*I] = multer[I].result[WIDTHB+OPT_WIDTHA-1..0];
+								par_adder.data[I][EAB_EXT_FULL_WIDTHR-1..OPT_WIDTHA*I+WIDTHB+OPT_WIDTHA] = multer[I].result[WIDTHB+OPT_WIDTHA-1];
+							END GENERATE;
+						END GENERATE;
+						par_adder.data[A_BLOCKS-1][OPT_WIDTHA*(A_BLOCKS-1)-1..0] = GND;
+					END GENERATE;
+
+					par_adder.data[A_BLOCKS-1][WIDTHB+REM_A_BITS+OPT_WIDTHA*(A_BLOCKS-1)-1..OPT_WIDTHA*(A_BLOCKS-1)] =
+												last_multer.result[];
+					IF REM_A_BITS < OPT_WIDTHA GENERATE
+						par_adder.data[A_BLOCKS-1][EAB_EXT_FULL_WIDTHR-1..WIDTHB+REM_A_BITS+OPT_WIDTHA*(A_BLOCKS-1)] =
+												last_multer.result[WIDTHB+REM_A_BITS-1];
+					END GENERATE;
+				END GENERATE;
+
+			ELSE GENERATE
+				IF A_BLOCKS > 1 GENERATE
+					FOR I IN 0 TO A_BLOCKS-2 GENERATE
+						par_adder.data[I][] = multer[I].result[WIDTHB+OPT_WIDTHA-1..0];
+					END GENERATE;
+				END GENERATE;
+
+				par_adder.data[A_BLOCKS-1][REM_A_BITS+WIDTHB-1..0] = last_multer.result[];
+
+				IF (REM_A_BITS < OPT_WIDTHA) & LPM_REPRESENTATION == "SIGNED" GENERATE
+					par_adder.data[A_BLOCKS-1][WIDTHB+OPT_WIDTHA-1..WIDTHB+REM_A_BITS] =
+										last_multer.result[REM_A_BITS+WIDTHB-1];
+				END GENERATE;
+			END GENERATE;
+
+			result[] = par_adder.result[WIDTHA+WIDTHB-1..0];
+
+			-- clock/aclr connections
+			IF USED(clock) GENERATE
+				IF USED(aclr) GENERATE
+					IF A_BLOCKS > 1 GENERATE
+						multer[].(clock, aclr) = (clock, aclr);
+						IF USED(clken) GENERATE
+							multer[].clken = clken;
+						END GENERATE;
+					END GENERATE;
+
+					last_multer.(clock, aclr) = (clock, aclr);
+					IF USED(clken) GENERATE
+						last_multer.clken = clken;
+					END GENERATE;
+
+				ELSE GENERATE
+					IF A_BLOCKS > 1 GENERATE
+						multer[].clock = clock;
+						IF USED(clken) GENERATE
+							multer[].clken = clken;
+						END GENERATE;
+					END GENERATE;
+
+					last_multer.clock = clock;
+					IF USED(clken) GENERATE
+						last_multer.clken = clken;
+					END GENERATE;
+			END GENERATE;
+			END GENERATE;
+		END GENERATE;
+	ELSE GENERATE
+		----------------------------------------------
+		-- Using the dedicated multiplier circuitry --
+		----------------------------------------------
+		IF FAMILY_MERCURY() == 1 GENERATE
+			IF SWITCH_INPUTS() GENERATE
+				real_dataa[] = datab[];
+				real_datab[WIDTHA - 1..0] = dataa[];
+				IF WIDTHA != WIDTH_B_ACTUAL GENERATE
+					IF LPM_REPRESENTATION == "SIGNED" GENERATE
+						real_datab[WIDTH_B_ACTUAL - 1] = dataa[WIDTHA - 1];
+					ELSE GENERATE
+						real_datab[WIDTH_B_ACTUAL - 1] = GND;
+					END GENERATE;
+				END GENERATE;
+			ELSE GENERATE
+				real_dataa[] = dataa[];
+				real_datab[WIDTHB - 1..0] = datab[];
+				IF WIDTHB != WIDTH_B_ACTUAL GENERATE
+					IF LPM_REPRESENTATION == "SIGNED" GENERATE
+						real_datab[WIDTH_B_ACTUAL - 1] = datab[WIDTHB - 1];
+					ELSE GENERATE
+						real_datab[WIDTH_B_ACTUAL - 1] = GND;
+					END GENERATE;
+				END GENERATE;
+			END GENERATE;
+
+			IF USED(clock) GENERATE
+				dedicated_multiplier.clock = clock;
+				IF USED(clken) GENERATE
+					dedicated_multiplier.clken = clken;
+				END GENERATE;
+				IF USED(aclr) GENERATE
+					dedicated_multiplier.aclr = aclr;
+				END GENERATE;
+
+				-- set up the dffpipes
+				-- a side
+				a_side_pipe.d[] = real_dataa[];
+				a_side_pipe.clock = clock;
+				a_side_pipe.ena = clken;
+				a_side_pipe.clrn = !aclr;
+				dedicated_multiplier.dataa[][] = a_side_pipe.pq[][];
+
+				--b side
+				b_side_pipe.d[] = real_datab[];
+				b_side_pipe.clock = clock;
+				b_side_pipe.ena = clken;
+				b_side_pipe.clrn = !aclr;
+				dedicated_multiplier.datab[][] = b_side_pipe.pq[][];
+			ELSE GENERATE
+				dedicated_multiplier.dataa[0][] = real_dataa[];
+				dedicated_multiplier.datab[0][] = real_datab[];
+			END GENERATE;
+
+			result[] = dedicated_multiplier.result[WIDTHA + WIDTHB - 1..0];
+		ELSE GENERATE
+			result[] = dedicated_multiplier.result[WIDTHA + WIDTHB - 1..0];
+			IF USED(clock) GENERATE
+				dedicated_multiplier.clock[0] = clock;
+				dedicated_multiplier.ena[0] = clken;
+				dedicated_multiplier.aclr[0] = aclr;
+			END GENERATE;
+
+			IF SWITCH_INPUTS() GENERATE
+				dedicated_multiplier.dataa[] = datab[];
+				dedicated_multiplier.datab[] = dataa[];
+			ELSE GENERATE
+				dedicated_multiplier.dataa[] = dataa[];
+				dedicated_multiplier.datab[] = datab[];
+			END GENERATE;
+		END GENERATE;
+	END GENERATE;
+	IF !USED(result) GENERATE
+		result[] = GND;
+	END GENERATE;
+END;

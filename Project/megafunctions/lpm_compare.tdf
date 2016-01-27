@@ -1,0 +1,497 @@
+--------------------------------------------------------------------
+--
+--	LPM_COMPARE Parameterized Megafunction
+--
+--  Copyright 1991-2010 Corporation  
+--  Your use of Altera Corporation's design tools, logic functions  
+--  and other software and tools, and its AMPP partner logic  
+--  functions, and any output files from any of the foregoing  
+--  (including device programming or simulation files), and any  
+--  associated documentation or information are expressly subject  
+--  to the terms and conditions of the Altera Program License  
+--  Subscription Agreement, Altera MegaCore Function License  
+--  Agreement, or other applicable license agreement, including,  
+--  without limitation, that your use is for the sole purpose of  
+--  programming logic devices manufactured by Altera and sold by  
+--  Altera or its authorized distributors.  Please refer to the  
+--  applicable agreement for further details. 
+--  
+--  9.1 Build 350  10/07/2009   
+--
+--	Version 4.0
+--
+--------------------------------------------------------------------
+
+----------------------------------------------------------------------------
+-- Name: lpm_compare.tdf
+-- Description: lpm_compare implements a comparator with aeb/agb/alb/aneb/
+-- aleb/ageb outputs. The general structure of lpm_compare is a tree of carry
+-- and/or cascade chains in FLEX devices that use a global project synthesis
+-- style of FAST; a tree of single-lcell trees in FLEX devices that use a
+-- global project synthesis style of Normal; and a pterm-reduced tree of
+-- pterm "chains"  (logic simplification of a chain structure with nodes
+-- substitued for CARRY and CASCADE primitives) for other device families
+-- and other synthesis styles.
+--
+-- lpm_compare.tdf is responsible for the necessary connections in various
+-- cases as follows:
+-- i) calculating the chain size required for pipelined comparator
+--    cases. The calculated chain size is the lcell/chain figure that is
+--    needed for the construction of a comparator tree with the required
+--    latency stages. If the requested latency is larger than the maximum
+--    number of levels possible with the given number of inputs, external
+--	  FFs will be inserted to generate the required latency.
+-- ii) sign bit inversion for SIGNED comparators
+-- iii) input and output swaping for certain output usage combinations
+--    such that the same chain logic(s) (EQ/GT) will be used for all cases.
+--
+-- NOTE: For a non-pipelined comparator, lpm_compare will use the user-
+-- specified parameter CHAIN_SIZE to determine the length of comparator chains.
+-- However, for the pipelined comparators, this parameter is overridden by
+-- the value calculated by lpm_compare for the requested latency, unless the
+-- user has specified a carry/cascade chain size limit that is smaller than
+-- the computed value(s). In the latter case, the user limits will override
+-- the calculated values in cmpchain.tdf module and the chains will be
+-- implemented as trees of shorter 	chains.
+----------------------------------------------------------------------------
+
+
+----------------------------------------------------------------------------
+       -- table of actions for different output usage combinations --
+----------------------------------------------------------------------------
+-- CODE | aeb/aneb | agb/aleb | alb/ageb | Action Taken
+----------------------------------------------------------------------------
+--   1  |    0     |    0     |    1     | USE GT chain, exchange inputs
+----------------------------------------------------------------------------
+--   2  |    0     |    1     |    0     | USE GT chain, no input exchange
+----------------------------------------------------------------------------
+--   3  |    0     |    1     |    1     | USE GT&EQ chains, no input exchange
+----------------------------------------------------------------------------
+--   4  |    1     |    0     |    0     | USE EQ chain, no input exchange
+----------------------------------------------------------------------------
+--   5  |    1     |    0     |    1     | USE GT & EQ chains, exchange inputs
+----------------------------------------------------------------------------
+--   6  |    1     |    1     |    0     | USE GT & EQ chains, no input exchange
+----------------------------------------------------------------------------
+--   7  |    1     |    1     |    1     | USE GT & EQ chains, no input exchange
+----------------------------------------------------------------------------
+
+INCLUDE "comptree";
+INCLUDE "altshift";
+
+OPTIONS NAME_SUBSTITUTION = ON;
+OPTIONS TREAT_DEFAULT_VALUE_AS_UNUSED = ON;
+
+PARAMETERS
+(	LPM_WIDTH,
+	LPM_REPRESENTATION = "UNSIGNED",
+	LPM_PIPELINE = 0,
+	CHAIN_SIZE = 8,
+	ONE_INPUT_IS_CONSTANT = "NO",
+	CARRY_CHAIN = "MANUAL",
+	CASCADE_CHAIN = "MANUAL",
+	CARRY_CHAIN_LENGTH = 8,
+	CASCADE_CHAIN_LENGTH = 8,
+	DEVICE_FAMILY,
+	CBXI_PARAMETER = "NOTHING"
+);
+
+INCLUDE "aglobal91.inc";	% device definitions %
+
+FUNCTION @CBXI_PARAMETER (aclr, clken, clock, dataa[LPM_WIDTH-1..0], datab[LPM_WIDTH-1..0])
+RETURNS (aeb, agb, ageb, alb, aleb, aneb);
+
+
+DEFINE MIN(a, b) = (a < b ? a : b);
+-- encode the output pins usage for case-based design optimization.
+DEFINE CODE() = -((USED(aeb) # USED(aneb))*4 +
+				  (USED(agb) # USED(aleb))*2 +
+				  (USED(alb) # USED(ageb)));
+
+-- LPM_PIPELINE parameter value is the pipeline LATENCY.
+CONSTANT LATENCY = LPM_PIPELINE;
+CONSTANT ONE_INPUT_CONSTANT = ONE_INPUT_IS_CONSTANT;
+
+----------------------------------------------------------
+--           equations for not-"aeb_only" cases
+----------------------------------------------------------
+-- ONE_INPUT_CONSTANT = "NO"
+------------------------------
+CONSTANT MAX11_LEVEL = (LPM_WIDTH <= 2) ? 1 : CEIL(LOG2(LPM_WIDTH));
+CONSTANT LEVEL11 = (LATENCY > 0) ? MIN(LATENCY + 1, MAX11_LEVEL) : 1;
+
+-- Calculate the required chain length for pipelined NOT "aeb-only" cases.
+-- In this case, 1 input pair is fed to each cell. Thus, if the chain size is p,
+-- the maximum number of inputs for a tree with m levels is p^m (or,
+-- equivalently, the chain length is equal to the CEIL(LEVEL2'th root
+-- of LPM_WIDTH).
+DEFINE TEST_ROOT11(m, n, p) = (p^m) >= n ? (p) : (TEST_ROOT11(m, n, (p+1)));
+CONSTANT ROOT11 = TEST_ROOT11(LEVEL11, LPM_WIDTH, 1);
+
+-- Calculate the true number of tree levels attainable with the selected
+-- chain size. Do this because, depending on the calculated chain size and
+-- LPM_WIDTH, certain tree levels may not be attainable. For those cases,
+-- will compensate using external FFs.
+DEFINE P11_LEVEL(n, p) = (n <= p) ? (1) : (1 + (P11_LEVEL(CEIL(n DIV p), p)));
+CONSTANT TRUE_LEVEL11 = P11_LEVEL(LPM_WIDTH, ROOT11);
+
+-- Determine the external latency depth considering the true (attainable)
+-- tree depth.
+CONSTANT EXT_LATENCY11 = LATENCY > TRUE_LEVEL11 ? (LATENCY - TRUE_LEVEL11) : 0;
+
+-------------------------------
+-- ONE_INPUT_CONSTANT = "YES"
+-------------------------------
+-- In this case, 2 inputs are fed to each cell at all levels, so the maximum
+-- number of tree levels are the same as the ONE_INPUT_CONSTANT = "NO" case
+-- above.
+CONSTANT LEVEL21 = LEVEL11;
+
+-- In this case, all tree levels have 2 input pairs (note that one pair is
+-- constant) and therefore if the chain size is p, the maximum number of inputs
+-- for a tree with m levels is 2*(p^m).
+DEFINE TEST_ROOT21(m, n, p) = (2*(p^m) >= n) ? (p) : (TEST_ROOT21(m, n, (p+1)));
+CONSTANT ROOT21 = TEST_ROOT21(LEVEL21, LPM_WIDTH, 1);
+
+-- Calculate the true number of tree levels attainable with the selected chain
+-- size. Do this because depending on the calculated chain size and LPM_WIDTH,
+-- certain tree levels may not be attainable. For those cases, will compensate
+-- using external FFs.
+DEFINE P2N_LEVEL(n, p) = (n <= p) ? (1) : (1 + (P2N_LEVEL(CEIL(n DIV p), p)));
+DEFINE P2F_LEVEL(n, p) = (n <= (2*p)) ? (1) : (1 + (P2N_LEVEL(CEIL(n DIV (2*p)), p)));
+CONSTANT TRUE_LEVEL21 = P2F_LEVEL(LPM_WIDTH, ROOT21);
+
+-- external latency determination
+CONSTANT EXT_LATENCY21 = (LATENCY > TRUE_LEVEL21) ? (LATENCY - TRUE_LEVEL21) : 0;
+
+----------------------------------------------------------
+--           equations for "aeb_only" cases
+----------------------------------------------------------
+-- Calculate the required chain length for pipelined "aeb-only" case. Possible cases are:
+-------------------------------
+-- ONE_INPUT_CONSTANT = "NO"
+-------------------------------
+-- Determine the number of tree levels for eq-only case. Note that in the first
+-- stage, the number of inputs is divided by 2, while for the next stages,
+--- they're divided by 4.
+DEFINE NEXT4_LEVEL(n) = (n <= 4) ? (1) : (1 + (NEXT4_LEVEL(CEIL(n DIV 4))));
+DEFINE FIRST24_LEVEL(n) = (n <= 2) ? (1) : (1 + (NEXT4_LEVEL(CEIL(n DIV 2))));
+CONSTANT MAX24_LEVEL = FIRST24_LEVEL(LPM_WIDTH);
+CONSTANT LEVEL24 = (LATENCY > 0) ? MIN(LATENCY + 1, MAX24_LEVEL) : 1;
+
+-- In this case, the first stage accepts 2 input pairs per cell but the
+-- remaining levels have 4 input pairs (note that one pair is constant and
+-- equal to VCC) and therefore, if the chain size is p, the maximum number of
+-- inputs for a tree with m levels is (2p)*((4p)^(m-1)).
+DEFINE TEST_ROOT24(m, n, p) = (2*(4^(m-1))*(p^m)) >= n ? (p) : (TEST_ROOT24(m, n, (p+1)));
+CONSTANT ROOT24 = TEST_ROOT24(LEVEL24, LPM_WIDTH, 1);
+
+-- Calculate the true number of tree levels attainable with the selected chain
+-- size. Do this because depending on the calculated chain size and LPM_WIDTH,
+-- certain tree levels may not be attainable. For those cases, will compensate
+-- using external FFs.
+DEFINE P4N_LEVEL(n, p) = (n <= (4*p)) ? (1) : (1 + (P4N_LEVEL(CEIL(n DIV (4*p)), p)));
+DEFINE P4F_LEVEL(n, p) = (n <= (2*p)) ? (1) : (1 + (P4N_LEVEL(CEIL(n DIV (2*p)), p)));
+CONSTANT TRUE_LEVEL24 = P4F_LEVEL(LPM_WIDTH, ROOT24);
+
+-- external latency determination
+CONSTANT EXT_LATENCY24 = (LATENCY > TRUE_LEVEL24) ? (LATENCY - TRUE_LEVEL24) : 0;
+
+-------------------------------
+-- ONE_INPUT_CONSTANT = "YES"
+-------------------------------
+-- Determine the number of tree levels for eq-only case. Note that at all levels
+-- the number of inputs is divided by 4.
+DEFINE ALL4_LEVEL(n) = (n <= 4) ? (1) : (1 + (ALL4_LEVEL(CEIL(n DIV 4))));
+CONSTANT MAX44_LEVEL = ALL4_LEVEL(LPM_WIDTH);
+CONSTANT LEVEL44 = (LATENCY > 0) ? MIN(LATENCY + 1, MAX44_LEVEL) : 1;
+
+-- In this case, all tree levels have 4 input pairs (note that one pair is
+-- constant) and therefore if the chain size is p, the maximum number of inputs
+-- for a tree with m levels is (4p)^m.
+DEFINE TEST_ROOT44(m, n, p) = ((4*p)^m) >= n ? (p) : (TEST_ROOT44(m, n, (p+1)));
+CONSTANT ROOT44 = TEST_ROOT44(LEVEL44, LPM_WIDTH, 1);
+
+-- Calculate the true number of tree levels attainable with the selected chain
+-- size. Do this because depending on the calculated chain size and LPM_WIDTH,
+-- certain tree levels may not be attainable. For those cases, will compensate
+-- using external FFs.
+DEFINE P44_LEVEL(n, p) = (n <= (4*p)) ? (1) : (1 + (P44_LEVEL(CEIL(n DIV (4*p)), p)));
+CONSTANT TRUE_LEVEL44 = P44_LEVEL(LPM_WIDTH, ROOT44);
+
+-- external latency determination
+CONSTANT EXT_LATENCY44 = (LATENCY > TRUE_LEVEL44) ? (LATENCY - TRUE_LEVEL44) : 0;
+
+
+----------------------------------------------------------
+-- select:  user-specified chain length (non-pipelined)
+--          calculated chain length (pipelined case)
+----------------------------------------------------------
+DEFINE CHAIN_LENGTH() = LATENCY == 0 ?
+							(USED(CHAIN_SIZE) ? CHAIN_SIZE :
+								(CODE() != 4 & USE_CARRY_CHAINS() ? CARRY_CHAIN_LENGTH :
+								   (CODE() == 4 & USE_CASCADE_CHAINS() ?
+								       CASCADE_CHAIN_LENGTH : CHAIN_SIZE))) :
+							(CODE() != 4 ?
+							   (ONE_INPUT_CONSTANT == "NO" ? ROOT11 : ROOT21) :
+							   (ONE_INPUT_CONSTANT == "NO" ? ROOT24 : ROOT44));
+
+-- determine the external latency for eq-only, one-input-constant, and the
+-- other cases.
+DEFINE EXT_LATENCY() = CODE() != 4 ?
+							(ONE_INPUT_CONSTANT == "NO" ? EXT_LATENCY11 : EXT_LATENCY21):
+							(ONE_INPUT_CONSTANT == "NO" ? EXT_LATENCY24 : EXT_LATENCY44);
+
+-- the outputs should be clocked if : -- a pipelined comparator with latency
+									  -- is larger or equal to the maximum
+									  -- number of levels possible with the
+									  -- given number of inputs (and other
+									  -- factors).
+DEFINE CLOCKED_OUTPUT() = (CODE() != 4 &
+						  	((ONE_INPUT_CONSTANT == "NO"  & LATENCY >= TRUE_LEVEL11) #
+						   	 (ONE_INPUT_CONSTANT == "YES" & LATENCY >= TRUE_LEVEL21))) #
+						  (CODE() == 4 &
+						  	((ONE_INPUT_CONSTANT == "NO"  & LATENCY >= TRUE_LEVEL24) #
+						   	 (ONE_INPUT_CONSTANT == "YES" & LATENCY >= TRUE_LEVEL44)))
+							? 1 : 0;
+
+-- the optimum latency is equal to the maximum height of the comparison tree.
+DEFINE OPT_LATENCY() = CODE() != 4 ?
+							(ONE_INPUT_CONSTANT == "NO" ? TRUE_LEVEL11 : TRUE_LEVEL21):
+							(ONE_INPUT_CONSTANT == "NO" ? TRUE_LEVEL24 : TRUE_LEVEL44);
+
+DEFINE CBX_FAMILY() = FAMILY_STRATIX();
+
+
+SUBDESIGN lpm_compare
+(
+	dataa[LPM_WIDTH-1..0]		: INPUT = GND;
+	datab[LPM_WIDTH-1..0]		: INPUT = GND;
+	clock						: INPUT = GND;
+	aclr						: INPUT = GND;
+	clken						: INPUT = VCC;
+	alb, aeb, agb				: OUTPUT;
+	aleb, aneb, ageb			: OUTPUT;
+)
+
+
+VARIABLE
+	IF (CBX_FAMILY() == 1 & CBXI_PARAMETER != "NOTHING") GENERATE
+		auto_generated : @CBXI_PARAMETER WITH ( CBXI_PARAMETER = "NOTHING" );
+	ELSE GENERATE
+	cmp_dataa	[LPM_WIDTH-1..0]	: NODE;
+	cmp_datab	[LPM_WIDTH-1..0]	: NODE;
+
+	cmp_ina		[LPM_WIDTH-1..0]	: NODE;
+	cmp_inb		[LPM_WIDTH-1..0]	: NODE;
+
+	-- (For now we can't compare with a string in DEFINE and CONSTANTS. So we
+	-- check them here.)
+	IF ONE_INPUT_CONSTANT == "NO" GENERATE
+		comparator  	: comptree WITH (LPM_WIDTH = LPM_WIDTH,
+										 CHAIN_LENGTH = CHAIN_LENGTH(),
+										 OUTPUTS_CLOCKED = CLOCKED_OUTPUT(),
+										 BURRIED_CLOCKED = 1,
+										 ONE_INPUT_CONSTANT = 0,
+										 MODE = 0);
+
+	ELSE GENERATE
+		comparator  	: comptree WITH (LPM_WIDTH = LPM_WIDTH,
+										 CHAIN_LENGTH = CHAIN_LENGTH(),
+										 ONE_INPUT_CONSTANT = 1,
+										 OUTPUTS_CLOCKED = CLOCKED_OUTPUT(),
+										 BURRIED_CLOCKED = 1,
+										 MODE = 0);
+	END GENERATE;
+
+ 	aeb_node	: NODE;	-- nodes connecting to the output of comparator tree
+	agb_node	: NODE;	-- and to the input of external latency block.
+
+	aeb_xnode	: NODE;	-- nodes connecting to the output of external
+	agb_xnode	: NODE; -- latency unit
+
+	aeb_ext_lat_ffs 	: altshift WITH (WIDTH = 1, DEPTH = EXT_LATENCY());
+	agb_ext_lat_ffs 	: altshift WITH (WIDTH = 1, DEPTH = EXT_LATENCY());
+	END GENERATE; -- StratixII
+
+BEGIN
+
+	ASSERT (LPM_REPRESENTATION == "UNSIGNED" # LPM_REPRESENTATION == "SIGNED")
+			REPORT "Illegal value for LPM_REPRESENTATION parameter (%) -- value must be UNSIGNED (the default) or SIGNED"
+				LPM_REPRESENTATION
+			SEVERITY ERROR
+			HELP_ID LPM_COMPARE_REPRESENTATION;
+
+	ASSERT (LPM_WIDTH > 0)
+			REPORT "Value of LPM_WIDTH parameter value must be greater than 0"
+			SEVERITY ERROR
+			HELP_ID LPM_COMPARE_WIDTH;
+
+	ASSERT (USED(clock) ? LATENCY > 0 : LATENCY == 0)
+			REPORT "Value of LPM_PIPELINE parameter must be greater than 0 if clock input is used and vice versa"
+			SEVERITY ERROR
+			HELP_ID LPM_COMPARE_CLOCK_WITHOUT_LATENCY;
+
+	ASSERT (EXT_LATENCY() <= 1 # LPM_WIDTH > 2)
+			REPORT "Value of LPM_PIPELINE parameter (%) should be lower -- use % for best performance/utilization" LATENCY, OPT_LATENCY()
+			SEVERITY INFO
+			HELP_ID LPM_COMPARE_CLOCK_LATENCY_VALUE;
+
+	ASSERT (EXT_LATENCY() <= 1 # LPM_WIDTH <= 2)
+			REPORT "Value of LPM_PIPELINE parameter (%) should be lower -- use % or % for best performance/utilization" LATENCY, OPT_LATENCY()-1, OPT_LATENCY()
+			SEVERITY INFO
+			HELP_ID LPM_COMPARE_CLOCK_LATENCY_VALUE2;
+
+	ASSERT !(LPM_PIPELINE > 0 & (FAMILY_STRATIX() == 1) &
+			 (USE_CASCADE_CHAINS()) & (CODE() == 4) & (CHAIN_LENGTH() > CASCADE_CHAIN_LENGTH))
+		   REPORT "Value of CASCADE_CHAIN_LENGTH parameter (%) is too low -- use % for best performance" CASCADE_CHAIN_LENGTH, CHAIN_LENGTH()
+		   SEVERITY INFO
+		   HELP_ID LPM_COMPARE_CASCADE_LENGTH;
+
+	ASSERT !(LPM_PIPELINE > 0 & (FAMILY_STRATIX() == 1) &
+			(USE_CARRY_CHAINS()) & ((CODE() == 1 # CODE() == 3) & (CHAIN_LENGTH() > CARRY_CHAIN_LENGTH)))
+		   REPORT "Value of CARRY_CHAIN_LENGTH parameter (%) is too low -- use % for best performance" CARRY_CHAIN_LENGTH, CHAIN_LENGTH()
+		   SEVERITY INFO
+		   HELP_ID LPM_COMPARE_CARRY_LENGTH;
+
+	ASSERT (FAMILY_IS_KNOWN() == 1)
+		REPORT "Megafunction lpm_compare does not recognize the current device family (%) -- ensure that you are using the newest version of the megafunction"
+			DEVICE_FAMILY
+		SEVERITY WARNING
+		HELP_ID LPM_COMPARE_FAMILY_UNKNOWN;
+	IF (CBX_FAMILY() == 1 & CBXI_PARAMETER != "NOTHING") GENERATE
+	IF USED(aclr) GENERATE
+		auto_generated.aclr = aclr;
+	END GENERATE;
+	IF USED(aeb) GENERATE
+		aeb = auto_generated.aeb;
+	END GENERATE;
+	IF USED(agb) GENERATE
+		agb = auto_generated.agb;
+	END GENERATE;
+	IF USED(ageb) GENERATE
+		ageb = auto_generated.ageb;
+	END GENERATE;
+	IF USED(alb) GENERATE
+		alb = auto_generated.alb;
+	END GENERATE;
+	IF USED(aleb) GENERATE
+		aleb = auto_generated.aleb;
+	END GENERATE;
+	IF USED(aneb) GENERATE
+		aneb = auto_generated.aneb;
+	END GENERATE;
+	IF USED(clken) GENERATE
+		auto_generated.clken = clken;
+	END GENERATE;
+	IF USED(clock) GENERATE
+		auto_generated.clock = clock;
+	END GENERATE;
+	IF USED(dataa) GENERATE
+		auto_generated.dataa[] = dataa[];
+	END GENERATE;
+	IF USED(datab) GENERATE
+		auto_generated.datab[] = datab[];
+	END GENERATE;
+	ELSE GENERATE
+
+	IF LPM_WIDTH > 1  GENERATE
+		cmp_dataa[LPM_WIDTH-2..0] = dataa[LPM_WIDTH-2..0];
+		cmp_datab[LPM_WIDTH-2..0] = datab[LPM_WIDTH-2..0];
+	END GENERATE;
+
+	% if inputs are signed, then invert the sign bits before comparison %
+	IF LPM_REPRESENTATION == "UNSIGNED" GENERATE
+		cmp_dataa[LPM_WIDTH-1] = dataa[LPM_WIDTH-1];
+		cmp_datab[LPM_WIDTH-1] = datab[LPM_WIDTH-1];
+	ELSE GENERATE
+		cmp_dataa[LPM_WIDTH-1] = !dataa[LPM_WIDTH-1];
+		cmp_datab[LPM_WIDTH-1] = !datab[LPM_WIDTH-1];
+	END GENERATE;
+
+	% decide whether exchange of inputs is neccessary %
+	IF (CODE() == 1) # (CODE() == 5) GENERATE
+		cmp_ina[] = cmp_datab[];
+		cmp_inb[] = cmp_dataa[];
+	ELSE GENERATE
+		cmp_ina[] = cmp_dataa[];
+		cmp_inb[] = cmp_datab[];
+	END GENERATE;
+
+  	comparator.dataa[] = cmp_ina[];
+  	comparator.datab[] = cmp_inb[];
+
+  	IF CODE() < 3 GENERATE
+  		-- for these cases no aeb output is needed.
+  		aeb_node = GND;
+  	ELSE GENERATE
+	 	aeb_node = comparator.aeb;
+ 	END GENERATE;
+
+ 	IF CODE() != 4 GENERATE
+ 		-- for this case no agb output is needed.
+		agb_node = comparator.agb;
+	ELSE GENERATE
+		agb_node = GND;
+	END GENERATE;
+
+ 	IF USED(clock) GENERATE
+ 		comparator.(clk, aset) = (clock, aclr);
+		IF USED(clken) GENERATE
+			comparator.clken = clken;
+		END GENERATE;
+ 	END GENERATE;
+
+  	% external latency connections %
+	IF EXT_LATENCY() > 0 GENERATE
+		aeb_ext_lat_ffs.(clock, aclr) = (clock, aclr);
+		agb_ext_lat_ffs.(clock, aclr) = (clock, aclr);
+		IF USED(clken) GENERATE
+			aeb_ext_lat_ffs.clken = clken;
+			agb_ext_lat_ffs.clken = clken;
+		END GENERATE;
+	END GENERATE;
+
+	aeb_ext_lat_ffs.data[] = aeb_node;
+	aeb_xnode = aeb_ext_lat_ffs.result[];
+
+	agb_ext_lat_ffs.data[] = agb_node;
+	agb_xnode = agb_ext_lat_ffs.result[];
+
+ 	-- now generate the appropriate outputs from aeb_node and agb_node
+ 	-- according to the combination of output pins used.
+ 	aeb = aeb_xnode;
+ 	aneb = !aeb_xnode;
+
+  	IF (CODE() == 1) # (CODE() == 5) GENERATE
+ 		alb  = agb_xnode;
+ 		ageb = !agb_xnode;
+ 		agb  = !(aeb_xnode # agb_xnode);
+ 		aleb = aeb_xnode # agb_xnode;
+ 	ELSE GENERATE
+	 	agb  = agb_xnode;
+ 		aleb = !agb_xnode;
+ 		alb  = !(aeb_xnode # agb_xnode);
+ 		ageb = aeb_xnode # agb_xnode;
+ 	END GENERATE;
+	END GENERATE; -- StratixII
+	IF !USED(aleb) GENERATE
+		aleb = GND;
+	END GENERATE;
+	IF !USED(aneb) GENERATE
+		aneb = GND;
+	END GENERATE;
+	IF !USED(ageb) GENERATE
+		ageb = GND;
+	END GENERATE;
+	IF !USED(agb) GENERATE
+		agb = GND;
+	END GENERATE;
+	IF !USED(alb) GENERATE
+		alb = GND;
+	END GENERATE;
+	IF !USED(aeb) GENERATE
+		aeb = GND;
+	END GENERATE;
+END;
+

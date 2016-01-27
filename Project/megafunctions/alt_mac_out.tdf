@@ -1,0 +1,1267 @@
+-----------------------------------------------------------------------------------------------------------
+-- ALT_MAC_OUT.TDF
+--
+-- Implement stratix MAC_OUT WYSIWYG using LEs (instead of DSP blocks)
+--
+--  Copyright 1991-2010 Corporation  
+--  Your use of Altera Corporation's design tools, logic functions  
+--  and other software and tools, and its AMPP partner logic  
+--  functions, and any output files from any of the foregoing  
+--  (including device programming or simulation files), and any  
+--  associated documentation or information are expressly subject  
+--  to the terms and conditions of the Altera Program License  
+--  Subscription Agreement, Altera MegaCore Function License  
+--  Agreement, or other applicable license agreement, including,  
+--  without limitation, that your use is for the sole purpose of  
+--  programming logic devices manufactured by Altera and sold by  
+--  Altera or its authorized distributors.  Please refer to the  
+--  applicable agreement for further details. 
+--  
+--  9.1 Build 350  10/07/2009   
+--
+-- Version 1.0
+--
+-----------------------------------------------------------------------------------------------------------
+
+OPTIONS NAME_SUBSTITUTION = ON;
+OPTIONS TREAT_DEFAULT_VALUE_AS_UNUSED = ON;
+
+CONSTANT REG_NONE = "none";
+
+-- NOTE: have to do this since string type gets lost if "A_" not used
+CONSTANT REG_0 = "A_0";
+CONSTANT REG_1 = "A_1";
+CONSTANT REG_2 = "A_2";
+CONSTANT REG_3 = "A_3";
+
+CONSTANT NO_CLOCK = REG_NONE;
+CONSTANT NO_CLEAR = REG_NONE;
+
+CONSTANT SIGN_REP_SIGNED = "SIGNED";
+CONSTANT SIGN_REP_UNSIGNED = "UNSIGNED";
+CONSTANT SIGN_REP_VARIABLE = "VARIABLE";
+
+CONSTANT MODE_OUTPUT_ONLY = "OUTPUT_ONLY";
+CONSTANT MODE_ACCUMULATOR = "ACCUMULATOR";
+CONSTANT MODE_ONE_LEVEL_ADDER = "ONE_LEVEL_ADDER";
+CONSTANT MODE_TWO_LEVEL_ADDER = "TWO_LEVEL_ADDER";
+CONSTANT MODE_TWO_LEVEL_ADDER_CHAIN_OUT = "TWO_LEVEL_ADDER_CHAIN_OUT";
+CONSTANT MODE_36_BIT_MULTIPLY = "36_BIT_MULTIPLY";
+CONSTANT MODE_DYNAMIC = "DYNAMIC";
+CONSTANT MODE_ADDER_CHAIN_ONLY = "ADDER_CHAIN_ONLY";
+
+CONSTANT BOOL_YES = "YES";
+CONSTANT BOOL_NO = "NO";
+
+CONSTANT FORMAT_315_WIDTH = 18;
+CONSTANT MODE_ACCUM_MAX_DATA_WIDTH = 52;
+CONSTANT MODE_ONE_LEVEL_ADDER_MAX_DATA_WIDTH = 37;
+CONSTANT MODE_TWO_LEVEL_ADDER_MAX_DATA_WIDTH = 38;
+
+PARAMETERS
+(
+	OPERATION_MODE,
+	DATAA_WIDTH = 0,
+	DATAB_WIDTH = 0,
+	DATAC_WIDTH = 0,
+	DATAD_WIDTH = 0,
+	ADDNSUB0_CLOCK = NO_CLOCK,
+	ADDNSUB1_CLOCK = NO_CLOCK,
+
+	ROUND0_CLOCK = NO_CLOCK,
+	ROUND1_CLOCK = NO_CLOCK,
+	SATURATE_CLOCK = NO_CLOCK,
+	MULTABSATURATE_CLOCK = NO_CLOCK,
+	MULTCDSATURATE_CLOCK = NO_CLOCK,
+	
+	ZEROACC_CLOCK = NO_CLOCK,
+	SIGNA_CLOCK = NO_CLOCK,
+	SIGNB_CLOCK = NO_CLOCK,
+	OUTPUT_CLOCK = NO_CLOCK,
+	ADDNSUB0_CLEAR = NO_CLEAR,
+	ADDNSUB1_CLEAR = NO_CLEAR,
+
+	ROUND0_CLEAR = NO_CLEAR,
+	ROUND1_CLEAR = NO_CLEAR,
+	SATURATE_CLEAR = NO_CLEAR,
+	MULTABSATURATE_CLEAR = NO_CLEAR,
+	MULTCDSATURATE_CLEAR = NO_CLEAR,
+
+	ZEROACC_CLEAR = NO_CLEAR,
+	SIGNA_CLEAR = NO_CLEAR,
+	SIGNB_CLEAR = NO_CLEAR,
+	OUTPUT_CLEAR = NO_CLEAR,
+	ADDNSUB0_PIPELINE_CLOCK = NO_CLOCK,
+	ADDNSUB1_PIPELINE_CLOCK = NO_CLOCK,
+
+	ROUND0_PIPELINE_CLOCK = NO_CLOCK,
+	ROUND1_PIPELINE_CLOCK = NO_CLOCK,
+	SATURATE_PIPELINE_CLOCK = NO_CLOCK,
+	MULTABSATURATE_PIPELINE_CLOCK = NO_CLOCK,
+	MULTCDSATURATE_PIPELINE_CLOCK = NO_CLOCK,
+	
+	ZEROACC_PIPELINE_CLOCK = NO_CLOCK,
+	SIGNA_PIPELINE_CLOCK = NO_CLOCK,
+	SIGNB_PIPELINE_CLOCK = NO_CLOCK,
+	ADDNSUB0_PIPELINE_CLEAR = NO_CLEAR,
+	ADDNSUB1_PIPELINE_CLEAR = NO_CLEAR,
+
+	ROUND0_PIPELINE_CLEAR = NO_CLEAR,
+	ROUND1_PIPELINE_CLEAR = NO_CLEAR,
+	SATURATE_PIPELINE_CLEAR = NO_CLEAR,
+	MULTABSATURATE_PIPELINE_CLEAR = NO_CLEAR,
+	MULTCDSATURATE_PIPELINE_CLEAR = NO_CLEAR,
+
+	ZEROACC_PIPELINE_CLEAR = NO_CLEAR,
+	SIGNA_PIPELINE_CLEAR = NO_CLEAR,
+	SIGNB_PIPELINE_CLEAR = NO_CLEAR,
+	
+	MODE0_CLOCK = NO_CLOCK,
+	MODE1_CLOCK = NO_CLOCK,
+	ZEROACC1_CLOCK = NO_CLOCK,
+	SATURATE1_CLOCK = NO_CLOCK,
+	OUTPUT1_CLOCK = NO_CLOCK,
+	OUTPUT2_CLOCK = NO_CLOCK,
+	OUTPUT3_CLOCK = NO_CLOCK,
+	OUTPUT4_CLOCK = NO_CLOCK,
+	OUTPUT5_CLOCK = NO_CLOCK,
+	OUTPUT6_CLOCK = NO_CLOCK,
+	OUTPUT7_CLOCK = NO_CLOCK,
+	MODE0_CLEAR = NO_CLEAR,
+	MODE1_CLEAR = NO_CLEAR,
+	ZEROACC1_CLEAR = NO_CLEAR,
+	SATURATE1_CLEAR = NO_CLEAR,
+	OUTPUT1_CLEAR = NO_CLEAR,
+	OUTPUT2_CLEAR = NO_CLEAR,
+	OUTPUT3_CLEAR = NO_CLEAR,
+	OUTPUT4_CLEAR = NO_CLEAR,
+	OUTPUT5_CLEAR = NO_CLEAR,
+	OUTPUT6_CLEAR = NO_CLEAR,
+	OUTPUT7_CLEAR = NO_CLEAR,
+	MODE0_PIPELINE_CLOCK = NO_CLOCK,
+	MODE1_PIPELINE_CLOCK = NO_CLOCK,
+	ZEROACC1_PIPELINE_CLOCK = NO_CLOCK,
+	SATURATE1_PIPELINE_CLOCK = NO_CLOCK,
+	MODE0_PIPELINE_CLEAR = NO_CLEAR,
+	MODE1_PIPELINE_CLEAR = NO_CLEAR,
+	ZEROACC1_PIPELINE_CLEAR = NO_CLEAR,
+	SATURATE1_PIPELINE_CLEAR = NO_CLEAR,
+	FIRST_ADDER0_CLOCK = NO_CLOCK,
+	FIRST_ADDER1_CLOCK = NO_CLOCK,
+	FIRST_ADDER0_CLEAR = NO_CLEAR,
+	FIRST_ADDER1_CLEAR = NO_CLEAR,
+	
+	DATAA_FORCED_TO_ZERO = BOOL_NO,
+	DATAC_FORCED_TO_ZERO = BOOL_NO,
+	
+	USING_ROUNDING = BOOL_NO,
+	USING_SATURATION = BOOL_NO,
+	USING_MULT_SATURATION = BOOL_NO,
+	USING_LOADABLE_ACCUM = BOOL_NO,
+	LOADABLE_ACCUM_SUPPORTED = BOOL_NO,
+
+	USING_CHAINOUT = BOOL_NO,
+	CHAININ_WIDTH = 0,
+	CHAINOUT_PIPELINE_CLOCK = NO_CLOCK,
+	CHAINOUT_PIPELINE_CLEAR = NO_CLEAR,
+
+	CBXI_PARAMETER = "NOTHING"
+);
+
+FUNCTION @CBXI_PARAMETER (clk[3..0], aclr[3..0], ena[3..0], dataa[(DATAA_WIDTH == 0 ? 1 : DATAA_WIDTH) - 1..0], datab[(DATAB_WIDTH == 0 ? 1 : DATAB_WIDTH) - 1..0], datac[(DATAC_WIDTH == 0 ? 1 : DATAC_WIDTH) - 1..0], datad[(DATAD_WIDTH == 0 ? 1 : DATAD_WIDTH) - 1..0], zeroacc, addnsub0, addnsub1, round0, round1, saturate, multabsaturate, multcdsaturate, signa, signb, mode0, mode1, saturate1, zeroacc1, chainin[RESULT_WIDTH()-1..0], zerochainout, roundchainout, saturatechainout)
+RETURNS (accoverflow, dataout[RESULT_WIDTH()-1..0]);
+
+include "alt_zaccum";
+include "lpm_add_sub";
+
+------------
+-- Macros --
+------------
+
+DEFINE IS_REGISTERED(clock) = clock != NO_CLOCK;
+
+DEFINE TRANSLATE_REG(clock) = clock == REG_0 ? 0 :
+							clock == REG_1 ? 1 :
+							clock == REG_2 ? 2 :
+							clock == REG_3 ? 3 :
+							-1;
+
+DEFINE OPERATION_MODE_IS_VALID() =	((OPERATION_MODE == MODE_OUTPUT_ONLY) #
+									(OPERATION_MODE == MODE_ACCUMULATOR) #
+									(OPERATION_MODE == MODE_ONE_LEVEL_ADDER) #
+									(OPERATION_MODE == MODE_TWO_LEVEL_ADDER) #
+									(OPERATION_MODE == MODE_TWO_LEVEL_ADDER_CHAIN_OUT) #
+									(OPERATION_MODE == MODE_36_BIT_MULTIPLY) #
+									(OPERATION_MODE == MODE_DYNAMIC) #
+									(OPERATION_MODE == MODE_ADDER_CHAIN_ONLY));
+
+DEFINE IS_USING_LOADABLE_ACCUM() = USING_LOADABLE_ACCUM == BOOL_YES;
+
+DEFINE IS_LOADABLE_ACCUM_SUPPORTED() = LOADABLE_ACCUM_SUPPORTED == BOOL_YES;
+						
+DEFINE RESULT_WIDTH() =	((OPERATION_MODE == MODE_OUTPUT_ONLY)		?	DATAA_WIDTH :
+						(OPERATION_MODE == MODE_ADDER_CHAIN_ONLY)	?	DATAA_WIDTH :
+						(OPERATION_MODE == MODE_ACCUMULATOR)		?	IS_LOADABLE_ACCUM_SUPPORTED() ? DATAB_WIDTH+16 : DATAA_WIDTH + 16 :
+						(OPERATION_MODE == MODE_ONE_LEVEL_ADDER)	?	((DATAA_WIDTH > DATAB_WIDTH) ? DATAA_WIDTH : DATAB_WIDTH) + 1 :
+						(OPERATION_MODE == MODE_TWO_LEVEL_ADDER)	?	((DATAA_WIDTH > DATAB_WIDTH) ? DATAA_WIDTH : DATAB_WIDTH) + 2 :
+						(OPERATION_MODE == MODE_TWO_LEVEL_ADDER_CHAIN_OUT)	?	((DATAA_WIDTH > DATAB_WIDTH) ? DATAA_WIDTH : DATAB_WIDTH) + 10 :
+						%OTHERWISE%									DATAA_WIDTH + DATAB_WIDTH);
+
+DEFINE INPUT_REPRESENTATION() = SIGN_REP_VARIABLE;
+
+DEFINE INPUT_REP_IS_CONSTANT() = INPUT_REPRESENTATION() != SIGN_REP_VARIABLE;
+
+DEFINE DO_DYNAMIC_SIGN() = !INPUT_REP_IS_CONSTANT() & (OPERATION_MODE != MODE_ACCUMULATOR);
+
+DEFINE IS_USING_ROUNDING() = USING_ROUNDING == BOOL_YES;
+
+DEFINE IS_USING_SATURATION() = USING_SATURATION == BOOL_YES;
+
+DEFINE IS_USING_MULT_SATURATION() = USING_MULT_SATURATION == BOOL_YES;
+
+DEFINE IS_USING_CHAINOUT() = (OPERATION_MODE == MODE_TWO_LEVEL_ADDER_CHAIN_OUT) # (OPERATION_MODE == MODE_ADDER_CHAIN_ONLY);
+
+CONSTANT NUM_115_EXTRA_BITS = (RESULT_WIDTH() > FORMAT_315_WIDTH) ? RESULT_WIDTH() - FORMAT_315_WIDTH : 0;
+
+CONSTANT ROUND_CONSTANT = 1 * (2 ^ (NUM_115_EXTRA_BITS - 1));
+
+
+
+SUBDESIGN alt_mac_out
+(
+	dataa[(DATAA_WIDTH == 0 ? 1 : DATAA_WIDTH) - 1..0] : INPUT = GND;
+	datab[(DATAB_WIDTH == 0 ? 1 : DATAB_WIDTH) - 1..0] : INPUT = GND;
+	datac[(DATAC_WIDTH == 0 ? 1 : DATAC_WIDTH) - 1..0] : INPUT = GND;
+	datad[(DATAD_WIDTH == 0 ? 1 : DATAD_WIDTH) - 1..0] : INPUT = GND;
+	zeroacc : INPUT = GND;
+	addnsub0 : INPUT = VCC;
+	addnsub1 : INPUT = VCC;
+	round : INPUT = GND;
+	round0 : INPUT = GND;
+	round1 : INPUT = GND;
+	saturate : INPUT = GND;
+	multabsaturate : INPUT = GND;
+	multcdsaturate : INPUT = GND;
+
+	signa : INPUT = VCC;
+	signb : INPUT = VCC;
+	clk[3..0] : INPUT = GND;
+	aclr[3..0] : INPUT = GND;
+	ena[3..0] : INPUT = VCC;
+
+	mode0 : INPUT = GND;
+	mode1 : INPUT = GND;
+	zeroacc1 : INPUT = GND;
+	saturate1 : INPUT = GND;
+
+	chainin[RESULT_WIDTH()-1..0] : INPUT = GND;
+	zerochainout : INPUT = GND;
+	roundchainout : INPUT = GND;
+	saturatechainout : INPUT = GND;
+
+	dataout[RESULT_WIDTH()-1..0] : OUTPUT;
+	accoverflow : OUTPUT;
+
+)
+VARIABLE
+
+	-- Dummy wires to get rid of warnings
+	dummy_round				: NODE;
+	dummy_saturate			: NODE;
+
+	IF (CBXI_PARAMETER != "NOTHING") GENERATE
+		auto_generated : @CBXI_PARAMETER WITH (CBXI_PARAMETER = "NOTHING");
+	ELSE GENERATE
+
+	-- Dummy wires to get rid of warnings
+	dummy_clk[3..0]			: NODE;
+	dummy_ena[3..0]			: NODE;
+	dummy_aclr[3..0]		: NODE;
+	
+	IF (OPERATION_MODE == MODE_ONE_LEVEL_ADDER) # (OPERATION_MODE == MODE_TWO_LEVEL_ADDER) # (OPERATION_MODE == MODE_TWO_LEVEL_ADDER_CHAIN_OUT) GENERATE
+
+		dummy_wire2[RESULT_WIDTH() - 1..0] : NODE;	
+		dummy_wire4[RESULT_WIDTH() - 1..0] : NODE;  			
+
+		IF IS_USING_ROUNDING() & (RESULT_WIDTH() > FORMAT_315_WIDTH) GENERATE
+
+			dummy_wire1[RESULT_WIDTH() - 1..0] : NODE;  
+			dummy_wire3[RESULT_WIDTH() - 1..0] : NODE;			
+			dummy_wire5[RESULT_WIDTH() - 1..0] : NODE;	
+			dummy_wire6[RESULT_WIDTH() - 1..0] : NODE;			
+
+		END GENERATE;
+
+	END GENERATE;	
+
+
+	
+	round0_wire 		: NODE;
+	round1_wire 		: NODE;
+	saturate_wire		: NODE;
+	multabsaturate_wire	: NODE;
+
+	chainin_wire[RESULT_WIDTH()-1..0] : NODE;
+
+	--
+	-- Generate registers
+	--
+	
+	IF IS_REGISTERED(SIGNA_CLOCK) GENERATE
+		signa_n : DFFE;
+	ELSE GENERATE
+		signa_n : NODE;
+	END GENERATE;
+
+	IF IS_REGISTERED(SIGNB_CLOCK) GENERATE
+		signb_n : DFFE;
+	ELSE GENERATE
+		signb_n : NODE;
+	END GENERATE;
+
+	IF (OPERATION_MODE == MODE_ONE_LEVEL_ADDER) GENERATE
+		IF IS_REGISTERED(FIRST_ADDER0_CLOCK) GENERATE
+			addsub_p[RESULT_WIDTH()-1..0] : DFFE;
+		ELSE GENERATE
+			addsub_p[RESULT_WIDTH()-1..0] : NODE;
+		END GENERATE;
+	END GENERATE;
+
+	IF (OPERATION_MODE == MODE_TWO_LEVEL_ADDER) # (OPERATION_MODE == MODE_TWO_LEVEL_ADDER_CHAIN_OUT) GENERATE
+		IF IS_REGISTERED(FIRST_ADDER0_CLOCK) GENERATE
+			addsub0_p[RESULT_WIDTH()-1..0] : DFFE;
+		ELSE GENERATE
+			addsub0_p[RESULT_WIDTH()-1..0] : NODE;
+		END GENERATE;
+
+		IF IS_REGISTERED(FIRST_ADDER1_CLOCK) GENERATE
+			addsub1_p[RESULT_WIDTH()-1..0] : DFFE;
+		ELSE GENERATE
+			addsub1_p[RESULT_WIDTH()-1..0] : NODE;
+		END GENERATE;
+	END GENERATE;
+
+	IF IS_USING_ROUNDING() GENERATE
+		IF IS_REGISTERED(ROUND0_CLOCK) GENERATE
+			round0_n : DFFE;
+		ELSE GENERATE
+			round0_n : NODE;
+		END GENERATE;
+
+		IF IS_REGISTERED(ROUND1_CLOCK) GENERATE
+			round1_n : DFFE;
+		ELSE GENERATE
+			round1_n : NODE;
+		END GENERATE;
+	
+		IF IS_REGISTERED(ROUND0_PIPELINE_CLOCK) GENERATE
+			round0_p : DFFE;
+		ELSE GENERATE
+			round0_p : NODE;
+		END GENERATE;
+
+		IF IS_REGISTERED(ROUND1_PIPELINE_CLOCK) GENERATE
+			round1_p : DFFE;
+		ELSE GENERATE
+			round1_p : NODE;
+		END GENERATE;
+	END GENERATE;
+
+	IF IS_USING_SATURATION() GENERATE
+		IF IS_REGISTERED(SATURATE_CLOCK) GENERATE
+			saturate_n : DFFE;
+		ELSE GENERATE
+			saturate_n : NODE;
+		END GENERATE;
+		
+		IF IS_REGISTERED(SATURATE_PIPELINE_CLOCK) GENERATE
+			saturate_p : DFFE;
+		ELSE GENERATE
+			saturate_p : NODE;
+		END GENERATE;		
+
+	END GENERATE;	
+
+	IF IS_USING_MULT_SATURATION() GENERATE
+		IF IS_REGISTERED(MULTABSATURATE_CLOCK) GENERATE
+			multabsaturate_n : DFFE;
+		ELSE GENERATE
+			multabsaturate_n : NODE;
+		END GENERATE;
+
+		IF IS_REGISTERED(MULTCDSATURATE_CLOCK) GENERATE
+			multcdsaturate_n : DFFE;
+		ELSE GENERATE
+			multcdsaturate_n : NODE;
+		END GENERATE;
+		
+		IF IS_REGISTERED(MULTABSATURATE_PIPELINE_CLOCK) GENERATE
+			multabsaturate_p : DFFE;
+		ELSE GENERATE
+			multabsaturate_p : NODE;
+		END GENERATE;
+
+		IF IS_REGISTERED(MULTCDSATURATE_PIPELINE_CLOCK) GENERATE
+			multcdsaturate_p : DFFE;
+		ELSE GENERATE
+			multcdsaturate_p : NODE;
+		END GENERATE;
+		
+		IF IS_REGISTERED(OUTPUT_CLOCK) & OPERATION_MODE == MODE_ACCUMULATOR & RESULT_WIDTH() == MODE_ACCUM_MAX_DATA_WIDTH GENERATE
+			mult_saturate_reg : DFFE;	
+			multabsaturate_p_outreg : DFFE;	
+		END GENERATE;
+	
+	END GENERATE;
+
+	IF IS_REGISTERED(ZEROACC_CLOCK) GENERATE
+		zeroacc_n : DFFE;
+	ELSE GENERATE
+		zeroacc_n : NODE;
+	END GENERATE;
+
+	IF IS_REGISTERED(ADDNSUB0_CLOCK) GENERATE
+		addnsub0_n : DFFE;
+	ELSE GENERATE
+		addnsub0_n : NODE;
+	END GENERATE;
+
+	IF IS_REGISTERED(ADDNSUB1_CLOCK) GENERATE
+		addnsub1_n : DFFE;
+	ELSE GENERATE
+		addnsub1_n : NODE;
+	END GENERATE;
+
+	IF IS_REGISTERED(SIGNA_PIPELINE_CLOCK) GENERATE
+		signa_p : DFFE;
+	ELSE GENERATE
+		signa_p : NODE;
+	END GENERATE;
+
+	IF IS_REGISTERED(SIGNB_PIPELINE_CLOCK) GENERATE
+		signb_p : DFFE;
+	ELSE GENERATE
+		signb_p : NODE;
+	END GENERATE;
+
+	IF IS_REGISTERED(ZEROACC_PIPELINE_CLOCK) GENERATE
+		zeroacc_p : DFFE;
+	ELSE GENERATE
+		zeroacc_p : NODE;
+	END GENERATE;
+
+	IF IS_REGISTERED(ADDNSUB0_PIPELINE_CLOCK) GENERATE
+		addnsub0_p : DFFE;
+	ELSE GENERATE
+		addnsub0_p : NODE;
+	END GENERATE;
+
+	IF IS_REGISTERED(ADDNSUB1_PIPELINE_CLOCK) GENERATE
+		addnsub1_p : DFFE;
+	ELSE GENERATE
+		addnsub1_p : NODE;
+	END GENERATE;
+
+	-- accumulator mode has output reg in accumulator itself
+	IF IS_REGISTERED(OUTPUT_CLOCK) & (OPERATION_MODE != MODE_ACCUMULATOR) GENERATE
+		dataout_n[RESULT_WIDTH()-1..0] : DFFE;
+	ELSE GENERATE
+		dataout_n[RESULT_WIDTH()-1..0] : NODE;
+	END GENERATE;
+
+	IF IS_USING_CHAINOUT() GENERATE
+		IF IS_REGISTERED(CHAINOUT_PIPELINE_CLOCK) GENERATE
+			chainout_p[RESULT_WIDTH()-1..0] : DFFE;
+		ELSE GENERATE
+			chainout_p[RESULT_WIDTH()-1..0] : NODE;
+		END GENERATE;
+	END GENERATE;
+
+	-- General purpose wires
+	
+	IF (OPERATION_MODE == MODE_ONE_LEVEL_ADDER) # (OPERATION_MODE == MODE_TWO_LEVEL_ADDER) # (OPERATION_MODE == MODE_TWO_LEVEL_ADDER_CHAIN_OUT) GENERATE
+		wire2[RESULT_WIDTH() - 1..0] : NODE;
+		wire4[RESULT_WIDTH() - 1..0] : NODE;
+		
+		IF IS_USING_ROUNDING() & (RESULT_WIDTH() > FORMAT_315_WIDTH) GENERATE
+
+			wire1[RESULT_WIDTH() - 1..0] : NODE;  
+			wire3[RESULT_WIDTH() - 1..0] : NODE;  			
+			wire5[RESULT_WIDTH() - 1..0] : NODE;	
+			wire6[RESULT_WIDTH() - 1..0] : NODE;			
+
+		END GENERATE;
+
+	END GENERATE;	
+	
+	--
+	-- Generate mode-specific nodes
+	-- 
+	
+	-- Nothing special to generate for OUTPUT_ONLY mode since only a wire
+	IF (OPERATION_MODE == MODE_ACCUMULATOR) GENERATE
+		accum : alt_zaccum WITH (WIDTH_IN = IS_LOADABLE_ACCUM_SUPPORTED() ? DATAB_WIDTH : DATAA_WIDTH,
+								WIDTH_OUT = RESULT_WIDTH(),
+								LPM_REPRESENTATION = INPUT_REP_IS_CONSTANT() ?  
+								INPUT_REPRESENTATION() : "UNUSED",
+								ROUNDING = IS_USING_ROUNDING() ? "VARIABLE" : "NO",
+								SATURATION = IS_USING_SATURATION() ? "VARIABLE" : "NO",
+								WIDTH_FRACTION = RESULT_WIDTH() - 18,
+								ROUND_FRACTION_WIDTH = 15
+								);
+		IF USING_SATURATION == "YES" & RESULT_WIDTH() == MODE_ACCUM_MAX_DATA_WIDTH GENERATE
+			accum_saturate_dff : DFFE;
+			saturate_p_outreg : DFFE;
+		END GENERATE;
+	ELSE GENERATE		
+		IF (OPERATION_MODE == MODE_ONE_LEVEL_ADDER) GENERATE
+			addsub : lpm_add_sub WITH (LPM_WIDTH = RESULT_WIDTH(),
+									LPM_REPRESENTATION = INPUT_REP_IS_CONSTANT() ?  
+										INPUT_REPRESENTATION() : SIGN_REP_SIGNED,
+									LPM_DIRECTION = "DEFAULT",
+									LPM_PIPELINE = 0,
+									ONE_INPUT_IS_CONSTANT = "UNUSED",
+									REGISTERED_AT_END = "UNUSED"
+									);
+									
+			IF IS_USING_ROUNDING() & (RESULT_WIDTH() > FORMAT_315_WIDTH) GENERATE
+				round_adder : lpm_add_sub WITH (LPM_WIDTH = RESULT_WIDTH(),
+											LPM_REPRESENTATION = INPUT_REP_IS_CONSTANT() ?  
+												INPUT_REPRESENTATION() : SIGN_REP_SIGNED,
+											LPM_DIRECTION = "ADD",
+											LPM_PIPELINE = 0,
+											ONE_INPUT_IS_CONSTANT = "UNUSED",
+											REGISTERED_AT_END = "UNUSED"
+											);
+			END GENERATE;
+									
+		ELSE GENERATE
+			IF (OPERATION_MODE == MODE_TWO_LEVEL_ADDER) # (OPERATION_MODE == MODE_TWO_LEVEL_ADDER_CHAIN_OUT) GENERATE
+				addsub0 : lpm_add_sub WITH (LPM_WIDTH = RESULT_WIDTH(),
+										LPM_REPRESENTATION = INPUT_REP_IS_CONSTANT() ?  
+											INPUT_REPRESENTATION() : SIGN_REP_SIGNED,
+										LPM_DIRECTION = "DEFAULT",
+										LPM_PIPELINE = 0,
+										ONE_INPUT_IS_CONSTANT = "UNUSED",
+										REGISTERED_AT_END = "UNUSED"
+										);
+									
+				addsub1 : lpm_add_sub WITH (LPM_WIDTH = RESULT_WIDTH(),
+										LPM_REPRESENTATION = INPUT_REP_IS_CONSTANT() ?  
+											INPUT_REPRESENTATION() : SIGN_REP_SIGNED,
+										LPM_DIRECTION = "DEFAULT",
+										LPM_PIPELINE = 0,
+										ONE_INPUT_IS_CONSTANT = "UNUSED",
+										REGISTERED_AT_END = "UNUSED"
+										);
+									
+				sum : lpm_add_sub WITH (LPM_WIDTH = RESULT_WIDTH(),
+										LPM_REPRESENTATION = INPUT_REP_IS_CONSTANT() ?  
+											INPUT_REPRESENTATION() : SIGN_REP_SIGNED,
+										LPM_DIRECTION = "ADD",
+										LPM_PIPELINE = 0,
+										ONE_INPUT_IS_CONSTANT = "UNUSED",
+										REGISTERED_AT_END = "UNUSED"
+										);
+
+				IF IS_USING_ROUNDING() & (RESULT_WIDTH() > FORMAT_315_WIDTH) GENERATE
+	
+					round0_adder : lpm_add_sub WITH (LPM_WIDTH = RESULT_WIDTH(),
+											LPM_REPRESENTATION = INPUT_REP_IS_CONSTANT() ?  
+												INPUT_REPRESENTATION() : SIGN_REP_SIGNED,
+											LPM_DIRECTION = "ADD",
+											LPM_PIPELINE = 0,
+											ONE_INPUT_IS_CONSTANT = "UNUSED",
+											REGISTERED_AT_END = "UNUSED"
+											);
+
+					round1_adder : lpm_add_sub WITH (LPM_WIDTH = RESULT_WIDTH(),
+											LPM_REPRESENTATION = INPUT_REP_IS_CONSTANT() ?  
+												INPUT_REPRESENTATION() : SIGN_REP_SIGNED,
+											LPM_DIRECTION = "ADD",
+											LPM_PIPELINE = 0,
+											ONE_INPUT_IS_CONSTANT = "UNUSED",
+											REGISTERED_AT_END = "UNUSED"
+											);
+				END GENERATE;	
+										
+				IF IS_USING_CHAINOUT() GENERATE
+					chain_add : lpm_add_sub WITH (LPM_WIDTH = RESULT_WIDTH(),
+						LPM_REPRESENTATION = INPUT_REP_IS_CONSTANT() ?  
+						INPUT_REPRESENTATION() : SIGN_REP_SIGNED,
+						LPM_DIRECTION = "DEFAULT",
+						LPM_PIPELINE = 0,
+						ONE_INPUT_IS_CONSTANT = "UNUSED",
+						REGISTERED_AT_END = "UNUSED");
+				END GENERATE;
+
+			ELSE GENERATE
+				IF (OPERATION_MODE == MODE_ADDER_CHAIN_ONLY) GENERATE
+					chain_add : lpm_add_sub WITH (LPM_WIDTH = RESULT_WIDTH(),
+						LPM_REPRESENTATION = INPUT_REP_IS_CONSTANT() ?  
+						INPUT_REPRESENTATION() : SIGN_REP_SIGNED,
+						LPM_DIRECTION = "DEFAULT",
+						LPM_PIPELINE = 0,
+						ONE_INPUT_IS_CONSTANT = "UNUSED",
+						REGISTERED_AT_END = "UNUSED");
+				--ELSE GENERATE
+					-- 36-bit mult mode
+				END GENERATE;
+			END GENERATE;
+		END GENERATE;
+	END GENERATE;
+
+	-- node to hold sign representation for modes where sign same for all data
+	IF (OPERATION_MODE != MODE_36_BIT_MULTIPLY) GENERATE
+		sign_rep : NODE;
+	END GENERATE;
+	END GENERATE;
+
+BEGIN
+
+	ASSERT (!USED(round))
+		REPORT "Port round must not be used"
+		SEVERITY ERROR;
+
+	-- Dummy wires to get rid of warnings
+	dummy_round = round;
+	dummy_saturate = saturate;
+
+	IF (CBXI_PARAMETER != "NOTHING") GENERATE
+		IF USED (accoverflow) GENERATE
+			accoverflow = auto_generated.accoverflow;
+		ELSE GENERATE
+			accoverflow = GND;
+		END GENERATE;
+		IF USED (dataout) GENERATE
+			dataout[] = auto_generated.dataout[];
+		ELSE GENERATE
+			dataout[] = GND;
+		END GENERATE;
+		IF USED (aclr) GENERATE
+			auto_generated.aclr[] = aclr[];
+		END GENERATE;
+		IF USED (clk) GENERATE
+			auto_generated.clk[] = clk[];
+		END GENERATE;
+		IF USED (ena) GENERATE
+			auto_generated.ena[] = ena[];
+		END GENERATE;
+		IF USED (dataa) GENERATE
+			auto_generated.dataa[] = dataa[];
+		END GENERATE;
+		IF USED (datab) GENERATE
+			auto_generated.datab[] = datab[];
+		END GENERATE;
+		IF USED (datac) GENERATE
+			auto_generated.datac[] = datac[];
+		END GENERATE;
+		IF USED (datad) GENERATE
+			auto_generated.datad[] = datad[];
+		END GENERATE;
+		IF USED (signa) GENERATE
+			auto_generated.signa = signa;
+		END GENERATE;
+		IF USED (signb) GENERATE
+			auto_generated.signb = signb;
+		END GENERATE;
+		IF USED (mode0) GENERATE
+			auto_generated.mode0 = mode0;
+		END GENERATE;
+		IF USED (mode1) GENERATE
+			auto_generated.mode1 = mode1;
+		END GENERATE;
+		IF USED (round0) GENERATE
+			auto_generated.round0 = round0;
+		END GENERATE;
+		IF USED (round1) GENERATE
+			auto_generated.round1 = round1;
+		END GENERATE;
+		IF USED (saturate) GENERATE
+			auto_generated.saturate = saturate;
+		END GENERATE;
+		IF USED (saturate1) GENERATE
+			auto_generated.saturate1 = saturate1;
+		END GENERATE;
+		IF USED (zeroacc) GENERATE
+			auto_generated.zeroacc = zeroacc;
+		END GENERATE;
+		IF USED (zeroacc1) GENERATE
+			auto_generated.zeroacc1 = zeroacc1;
+		END GENERATE;
+		IF USED (multabsaturate) GENERATE
+			auto_generated.multabsaturate = multabsaturate;
+		END GENERATE;
+		IF USED (multcdsaturate) GENERATE
+			auto_generated.multcdsaturate = multcdsaturate;
+		END GENERATE;
+		IF USED (addnsub0) GENERATE
+			auto_generated.addnsub0 = addnsub0;
+		END GENERATE;
+		IF USED (addnsub1) GENERATE
+			auto_generated.addnsub1 = addnsub1;
+		END GENERATE;
+	ELSE GENERATE
+	-- Dummy wires to get rid of warnings
+	dummy_clk[3..0] = clk[3..0];
+	dummy_ena[3..0]	= ena[3..0];
+	dummy_aclr[3..0] = aclr[3..0];
+
+
+	IF (OPERATION_MODE == MODE_ONE_LEVEL_ADDER) # (OPERATION_MODE == MODE_TWO_LEVEL_ADDER) # (OPERATION_MODE == MODE_TWO_LEVEL_ADDER_CHAIN_OUT) GENERATE
+
+		dummy_wire2[RESULT_WIDTH() - 1..0] = wire2[RESULT_WIDTH() - 1..0];  
+		dummy_wire4[RESULT_WIDTH() - 1..0] = wire4[RESULT_WIDTH() - 1..0];  
+		
+		IF IS_USING_ROUNDING() & (RESULT_WIDTH() > FORMAT_315_WIDTH) GENERATE
+
+			dummy_wire1[RESULT_WIDTH() - 1..0] = wire1[RESULT_WIDTH() - 1..0];  
+			dummy_wire3[RESULT_WIDTH() - 1..0] = wire3[RESULT_WIDTH() - 1..0];  
+			dummy_wire5[RESULT_WIDTH() - 1..0] = wire5[RESULT_WIDTH() - 1..0];  
+			dummy_wire6[RESULT_WIDTH() - 1..0] = wire6[RESULT_WIDTH() - 1..0];  
+
+		END GENERATE;
+
+	END GENERATE;	
+
+
+
+	round0_wire = round0; 
+	round1_wire = round1;
+	saturate_wire = saturate;
+	multabsaturate_wire = multabsaturate;
+
+	chainin_wire[] = chainin[];
+
+	ASSERT (OPERATION_MODE_IS_VALID())
+		REPORT "Unknown DSP slice operation mode (%)." OPERATION_MODE
+		SEVERITY ERROR;
+
+	ASSERT (OPERATION_MODE != MODE_36_BIT_MULTIPLY)
+		REPORT "DSP Mode 36-bit-multiply is not supported by alt_mac_out"
+		SEVERITY ERROR;
+
+	ASSERT (OPERATION_MODE != MODE_DYNAMIC)
+		REPORT "DSP Mode Dynamic is not supported by alt_mac_out"
+		SEVERITY ERROR;
+
+	IF (OPERATION_MODE != MODE_36_BIT_MULTIPLY) GENERATE
+		-- sign representation is signed if either A or B mult operands are signed
+		sign_rep = signa_p # signb_p;
+	END GENERATE;
+
+	-- generate mode-specific logic
+	IF 	(OPERATION_MODE == MODE_OUTPUT_ONLY) GENERATE
+		-- only wire, possibly through output regs
+		dataout_n[] = dataa[];
+	ELSE GENERATE
+		IF (OPERATION_MODE == MODE_ACCUMULATOR) GENERATE			
+			ASSERT (IS_REGISTERED(OUTPUT_CLOCK))
+				REPORT "OUTPUT_CLOCK is required for accumulator mode"
+				SEVERITY ERROR;
+
+			IF IS_LOADABLE_ACCUM_SUPPORTED() GENERATE
+
+				IF IS_USING_LOADABLE_ACCUM() GENERATE
+					IF (RESULT_WIDTH() > DATAA_WIDTH) GENERATE
+						accum.load_data[RESULT_WIDTH()-1..RESULT_WIDTH()-DATAA_WIDTH] = dataa[];						
+						accum.load_data[RESULT_WIDTH()-DATAA_WIDTH-1..0] = GND;
+					ELSE GENERATE
+						accum.load_data[RESULT_WIDTH()-1..0] = dataa[DATAA_WIDTH-1..DATAA_WIDTH-RESULT_WIDTH()];
+					END GENERATE;
+				END GENERATE;
+			
+				IF DATAB_WIDTH > 0 GENERATE
+					IF IS_USING_MULT_SATURATION() & RESULT_WIDTH() == MODE_ACCUM_MAX_DATA_WIDTH GENERATE
+						accum.data[0] = (multabsaturate_p & GND) # (!multabsaturate_p & datab[0]);
+					ELSE GENERATE
+						accum.data[0] = datab[0];
+					END GENERATE;
+					accum.data[DATAB_WIDTH-1..1] = datab[DATAB_WIDTH-1..1]; 
+				END GENERATE;
+			
+			ELSE GENERATE
+				accum.data[] = dataa[];
+			END GENERATE;	
+			
+			IF IS_USING_ROUNDING() GENERATE
+				accum.round = round0_p;
+			END GENERATE;
+			IF IS_USING_SATURATION() GENERATE
+				accum.saturate = saturate_p;
+			END GENERATE;
+			
+			accum.add_sub = addnsub0_p;
+			accum.zero_accum = zeroacc_p;
+
+			
+			IF !INPUT_REP_IS_CONSTANT() GENERATE
+				accum.sign_data = sign_rep;
+			END GENERATE;
+		
+			-- When saturation is enabled in the multiplier, the saturation overflow for the multiplier is 
+			-- output on MAC_OUT dataout[1] and for the accumulator is output on MAC_OUT[2] ONLY if dataout[]
+			-- is a 52-bit bus.  If the output width is less than 52-bits, then the saturation overflow signal 
+			-- cannot be accessed.
+			IF IS_USING_MULT_SATURATION() & RESULT_WIDTH() == MODE_ACCUM_MAX_DATA_WIDTH GENERATE
+				
+				dataout_n[RESULT_WIDTH()-1..3] = accum.result[RESULT_WIDTH()-1..3];
+				IF IS_REGISTERED(OUTPUT_CLOCK) GENERATE
+					mult_saturate_reg.d = datab[0];
+					mult_saturate_reg.clk = clk[TRANSLATE_REG(OUTPUT_CLOCK)];
+					mult_saturate_reg.ena = ena[TRANSLATE_REG(OUTPUT_CLOCK)];
+					mult_saturate_reg.clrn = !aclr[TRANSLATE_REG(OUTPUT_CLEAR)];
+
+					multabsaturate_p_outreg.d = multabsaturate_p;
+					multabsaturate_p_outreg.clk = clk[TRANSLATE_REG(OUTPUT_CLOCK)];
+					multabsaturate_p_outreg.ena = ena[TRANSLATE_REG(OUTPUT_CLOCK)];
+					multabsaturate_p_outreg.clrn = !aclr[TRANSLATE_REG(OUTPUT_CLEAR)];
+
+					dataout_n[1] = (multabsaturate_p_outreg & mult_saturate_reg.q) # (!multabsaturate_p_outreg & accum.result[1]);
+				ELSE GENERATE				
+					dataout_n[1] = (multabsaturate_p & datab[0]) # (!multabsaturate_p & accum.result[1]);
+				END GENERATE;
+
+				IF USING_SATURATION == "YES" GENERATE
+					accum_saturate_dff.d = accum.saturate_overflow;
+					accum_saturate_dff.clk = clk[TRANSLATE_REG(OUTPUT_CLOCK)];
+					accum_saturate_dff.ena = ena[TRANSLATE_REG(OUTPUT_CLOCK)];
+					accum_saturate_dff.clrn = !aclr[TRANSLATE_REG(OUTPUT_CLEAR)];
+
+					saturate_p_outreg.d = saturate_p;
+					saturate_p_outreg.clk = clk[TRANSLATE_REG(OUTPUT_CLOCK)];
+					saturate_p_outreg.ena = ena[TRANSLATE_REG(OUTPUT_CLOCK)];
+					saturate_p_outreg.clrn = !aclr[TRANSLATE_REG(OUTPUT_CLEAR)];
+
+					dataout_n[2] = (saturate_p_outreg & accum_saturate_dff.q) # (!saturate_p_outreg & accum.result[2]);
+				ELSE GENERATE
+					dataout_n[2] = accum.result[2];
+				END GENERATE;
+
+				dataout_n[0] = accum.result[0];
+			ELSE GENERATE
+				IF USING_SATURATION == "YES" & RESULT_WIDTH() == MODE_ACCUM_MAX_DATA_WIDTH  GENERATE
+					dataout_n[RESULT_WIDTH()-1..3] = accum.result[RESULT_WIDTH()-1..3];											
+					accum_saturate_dff.d = accum.saturate_overflow;
+					accum_saturate_dff.clk = clk[TRANSLATE_REG(OUTPUT_CLOCK)];
+					accum_saturate_dff.ena = ena[TRANSLATE_REG(OUTPUT_CLOCK)];
+					accum_saturate_dff.clrn = !aclr[TRANSLATE_REG(OUTPUT_CLEAR)];
+
+					saturate_p_outreg.d = saturate_p;
+					saturate_p_outreg.clk = clk[TRANSLATE_REG(OUTPUT_CLOCK)];
+					saturate_p_outreg.ena = ena[TRANSLATE_REG(OUTPUT_CLOCK)];
+					saturate_p_outreg.clrn = !aclr[TRANSLATE_REG(OUTPUT_CLEAR)];
+
+					dataout_n[2] = (saturate_p_outreg & accum_saturate_dff.q) # (!saturate_p_outreg & accum.result[2]);
+					dataout_n[1] = accum.result[1];	
+					dataout_n[0] = accum.result[0];
+				ELSE GENERATE
+					dataout_n[] = accum.result[];			
+				END GENERATE;
+			END GENERATE;
+		
+			accoverflow = accum.overflow;
+		
+			accum.clock = clk[TRANSLATE_REG(OUTPUT_CLOCK)];
+			accum.clken = ena[TRANSLATE_REG(OUTPUT_CLOCK)];
+			accum.aclr = aclr[TRANSLATE_REG(OUTPUT_CLEAR)];
+
+		ELSE GENERATE
+			IF (OPERATION_MODE == MODE_ONE_LEVEL_ADDER) GENERATE
+				addsub.add_sub = addnsub0_p;
+				IF IS_USING_MULT_SATURATION() & RESULT_WIDTH() == MODE_ONE_LEVEL_ADDER_MAX_DATA_WIDTH GENERATE
+					-- LSB from mult is sat-overflow flag if saturation is being used
+					--  and so should be cleared before being fed to the adder
+					addsub.dataa[DATAA_WIDTH-1..1] = dataa[DATAA_WIDTH-1..1];
+					addsub.datab[DATAB_WIDTH-1..1] = datab[DATAB_WIDTH-1..1];
+					addsub.dataa[0] = !multabsaturate_p & dataa[0];
+					addsub.datab[0] = !multabsaturate_p & datab[0];
+				ELSE GENERATE
+					addsub.dataa[DATAA_WIDTH-1..0] = dataa[DATAA_WIDTH-1..0];
+					addsub.datab[DATAB_WIDTH-1..0] = datab[DATAB_WIDTH-1..0];
+				END GENERATE;
+
+				IF (DO_DYNAMIC_SIGN()) GENERATE
+					-- set MSBs based on dynamic sign signal
+					addsub.dataa[RESULT_WIDTH()-1..DATAA_WIDTH] = sign_rep & dataa[DATAA_WIDTH-1];
+					addsub.datab[RESULT_WIDTH()-1..DATAB_WIDTH] = sign_rep & datab[DATAA_WIDTH-1];
+				ELSE GENERATE
+					IF (INPUT_REPRESENTATION() == SIGN_REP_SIGNED) GENERATE
+						-- set MSBs based as sign extended since this is signed
+						addsub.dataa[RESULT_WIDTH()-1..DATAA_WIDTH] = dataa[DATAA_WIDTH-1];
+						addsub.datab[RESULT_WIDTH()-1..DATAB_WIDTH] = datab[DATAB_WIDTH-1];
+					END GENERATE;
+				END GENERATE;
+				
+				addsub_p[] = addsub.result[];
+
+				IF IS_USING_ROUNDING() & (RESULT_WIDTH() > FORMAT_315_WIDTH) GENERATE
+					-- Only round if width of the number is longer than the width for a 1.15
+					-- number.
+					
+					round_adder.dataa[] = addsub_p[];
+					round_adder.datab[] = ROUND_CONSTANT;
+										
+					wire1[] = round_adder.result[];
+					wire5[RESULT_WIDTH()-1..NUM_115_EXTRA_BITS] = wire1[RESULT_WIDTH()-1..NUM_115_EXTRA_BITS];
+					wire5[NUM_115_EXTRA_BITS-1..0] = GND;
+					
+					wire2[] = (round0_p & wire5[]) # (!round0_p & addsub_p[]);
+					
+				ELSE GENERATE
+					wire2[] = addsub_p[];
+				END GENERATE;
+				
+				IF IS_USING_MULT_SATURATION() & RESULT_WIDTH() == MODE_ONE_LEVEL_ADDER_MAX_DATA_WIDTH GENERATE
+					-- Whern saturation is enabled in the multipliers, the saturation overflow for the 
+					-- multiplier feeding dataA is output on MAC_OUT.dataout[0] and for the multiplier
+					-- feeding dataB is output on MAC_OUT.dataout[1] ONLY if dataout[] is a 37-bit bus.  
+					-- If the output width is less than 37-bits, then the saturation overflow signals 
+					-- cannot be accessed.
+					
+					dataout_n[RESULT_WIDTH()-1..2] = wire2[RESULT_WIDTH()-1..2];
+					dataout_n[0] = (multabsaturate_p & dataa[0]) # (!multabsaturate_p & wire2[0]);
+					dataout_n[1] = (multabsaturate_p & datab[0]) # (!multabsaturate_p & wire2[1]);
+	
+				ELSE GENERATE
+					dataout_n[] = wire2[];				
+				END GENERATE;
+
+			ELSE GENERATE
+				IF (OPERATION_MODE == MODE_TWO_LEVEL_ADDER) # (OPERATION_MODE == MODE_TWO_LEVEL_ADDER_CHAIN_OUT) GENERATE
+					addsub0.add_sub = addnsub0_p;
+					IF IS_USING_MULT_SATURATION() & RESULT_WIDTH() == MODE_TWO_LEVEL_ADDER_MAX_DATA_WIDTH GENERATE
+						-- LSB from mult is sat-overflow flag if saturation is being used
+						--  and so should be cleared before being fed to the adder
+						addsub0.dataa[DATAA_WIDTH-1..1] = dataa[DATAA_WIDTH-1..1];
+						addsub0.datab[DATAB_WIDTH-1..1] = datab[DATAB_WIDTH-1..1];
+						addsub0.dataa[0] = !multabsaturate_p & dataa[0];
+						addsub0.datab[0] = !multabsaturate_p & datab[0];
+					ELSE GENERATE
+						addsub0.dataa[DATAA_WIDTH-1..0] = dataa[DATAA_WIDTH-1..0];
+						addsub0.datab[DATAB_WIDTH-1..0] = datab[DATAB_WIDTH-1..0];
+					END GENERATE;
+
+					IF (DO_DYNAMIC_SIGN()) GENERATE
+						-- set MSBs based on dynamic sign signal
+						addsub0.dataa[RESULT_WIDTH()-1..DATAA_WIDTH] = sign_rep & dataa[DATAA_WIDTH-1];
+						addsub0.datab[RESULT_WIDTH()-1..DATAB_WIDTH] = sign_rep & datab[DATAB_WIDTH-1];
+					ELSE GENERATE
+						IF (INPUT_REPRESENTATION() == SIGN_REP_SIGNED) GENERATE
+							-- set MSBs based as sign extended since this is signed
+							addsub0.dataa[RESULT_WIDTH()-1..DATAA_WIDTH] = dataa[DATAA_WIDTH-1];
+							addsub0.datab[RESULT_WIDTH()-1..DATAB_WIDTH] = datab[DATAB_WIDTH-1];
+						END GENERATE;
+					END GENERATE;
+
+					addsub1.add_sub = addnsub1_p;
+					IF IS_USING_MULT_SATURATION() & RESULT_WIDTH() == MODE_TWO_LEVEL_ADDER_MAX_DATA_WIDTH GENERATE
+						-- LSB from mult is sat-overflow flag if saturation is being used
+						--  and so should be cleared before being fed to the adder
+						addsub1.dataa[DATAC_WIDTH-1..1] = datac[DATAC_WIDTH-1..1];
+						addsub1.datab[DATAD_WIDTH-1..1] = datad[DATAD_WIDTH-1..1];
+						addsub1.dataa[0] = !multcdsaturate_p & datac[0];
+						addsub1.datab[0] = !multcdsaturate_p & datad[0];
+					ELSE GENERATE
+						addsub1.dataa[DATAC_WIDTH-1..0] = datac[DATAC_WIDTH-1..0];
+						addsub1.datab[DATAD_WIDTH-1..0] = datad[DATAD_WIDTH-1..0];
+					END GENERATE;
+
+					IF (DO_DYNAMIC_SIGN()) GENERATE
+						-- set MSBs based on dynamic sign signal
+						addsub1.dataa[RESULT_WIDTH()-1..DATAC_WIDTH] = sign_rep & datac[DATAC_WIDTH-1];
+						addsub1.datab[RESULT_WIDTH()-1..DATAD_WIDTH] = sign_rep & datad[DATAD_WIDTH-1];
+					ELSE GENERATE
+						IF (INPUT_REPRESENTATION() == SIGN_REP_SIGNED) GENERATE
+							-- set MSBs based as sign extended since this is signed
+							addsub1.dataa[RESULT_WIDTH()-1..DATAC_WIDTH] = datac[DATAC_WIDTH-1];
+							addsub1.datab[RESULT_WIDTH()-1..DATAD_WIDTH] = datad[DATAD_WIDTH-1];
+						END GENERATE;
+					END GENERATE;
+
+					addsub0_p[] = addsub0.result[];
+					addsub1_p[] = addsub1.result[];
+
+					IF IS_USING_ROUNDING() & (RESULT_WIDTH() > FORMAT_315_WIDTH) GENERATE
+						-- Only round if width of the number is longer than the width for a 1.15
+						-- number.
+
+						-- Round_0
+						round0_adder.dataa[] = addsub0_p[];
+						round0_adder.datab[] = ROUND_CONSTANT;
+						wire1[] = round0_adder.result[];
+						wire5[RESULT_WIDTH()-1..NUM_115_EXTRA_BITS] = wire1[RESULT_WIDTH()-1..NUM_115_EXTRA_BITS];
+						wire5[NUM_115_EXTRA_BITS-1..0] = GND;
+						wire2[] = (round0_p & wire5[]) # (!round0_p & addsub0_p[]);
+
+						-- Round_1
+						round1_adder.dataa[] = addsub1_p[];
+						round1_adder.datab[] = ROUND_CONSTANT;
+						wire3[] = round1_adder.result[];
+						wire6[RESULT_WIDTH()-1..NUM_115_EXTRA_BITS] = wire3[RESULT_WIDTH()-1..NUM_115_EXTRA_BITS];
+						wire6[NUM_115_EXTRA_BITS-1..0] = GND;
+						wire4[] = (round1_p & wire6[]) # (!round1_p & addsub1_p[]);						
+						
+					ELSE GENERATE
+							wire2[] = addsub0_p[];
+							wire4[] = addsub1_p[];	
+					END GENERATE;
+
+					sum.dataa[] = wire2[];
+					sum.datab[] = wire4[];
+
+					IF IS_USING_MULT_SATURATION() & RESULT_WIDTH() == MODE_TWO_LEVEL_ADDER_MAX_DATA_WIDTH GENERATE
+						-- Whern saturation is enabled, the saturation overflow for the 
+						-- multiplier feeding dataA is output on MAC_OUT.dataout[0] and for the multiplier
+						-- feeding dataB is output on MAC_OUT.dataout[1], dataC on MAC_OUT.dataout[2], and 
+						-- dataD on MAC_OUT.dataout[3], ONLY if dataout[] is a 38-bit bus.  
+						-- If the output width is less than 38-bits, then the saturation overflow signals 
+						-- cannot be accessed.
+						
+						dataout_n[RESULT_WIDTH()-1..3] = sum.result[RESULT_WIDTH()-1..3];
+						dataout_n[0] = (multabsaturate_p & dataa[0]) # (!multabsaturate_p & sum.result[0]);
+						dataout_n[1] = (multabsaturate_p & datab[0]) # (!multabsaturate_p & sum.result[1]);						
+						dataout_n[2] = (multcdsaturate_p & datac[0]) # (!multcdsaturate_p & sum.result[2]);
+						accoverflow = multcdsaturate_p & datad[0];
+						
+					ELSE GENERATE
+						dataout_n[] = sum.result[];
+					END GENERATE;
+
+					IF IS_USING_CHAINOUT() GENERATE
+						chain_add.dataa[] = dataout_n[];
+						chain_add.datab[] = chainin_wire[];
+						chainout_p[] = !zerochainout & chain_add.result[];
+					END GENERATE;
+
+				ELSE GENERATE
+					IF (OPERATION_MODE == MODE_ADDER_CHAIN_ONLY) GENERATE
+						dataout_n[] = dataa[];
+						chain_add.dataa[] = dataout_n[];
+						chain_add.datab[] = chainin_wire[];
+						chainout_p[] = !zerochainout & chain_add.result[];
+					ELSE GENERATE
+						-- 36-bit multiply mode
+						ASSERT (0==1)
+							REPORT "DSP 36_BIT_MULTIPLY mode not implemented yet"
+							SEVERITY ERROR;
+							
+					END GENERATE;
+				END GENERATE;
+			END GENERATE;
+		END GENERATE;
+	END GENERATE;
+
+	-- set-up register paths
+	signa_n = signa;
+	signa_p = signa_n;
+	
+	signb_n = signb;
+	signb_p = signb_n;
+	
+	zeroacc_n = zeroacc;
+	zeroacc_p = zeroacc_n;
+	
+	addnsub0_n = addnsub0;
+	addnsub0_p = addnsub0_n;
+	
+	addnsub1_n = addnsub1;
+	addnsub1_p = addnsub1_n;
+	
+	IF IS_USING_ROUNDING() GENERATE
+		round0_n = round0;
+		round0_p = round0_n;	
+		round1_n = round1;
+		round1_p = round1_n;	
+	END GENERATE;
+	
+	IF IS_USING_SATURATION() GENERATE
+		saturate_n = saturate;
+		saturate_p = saturate_n;
+	END GENERATE;
+	
+	IF IS_USING_MULT_SATURATION() GENERATE
+		multabsaturate_n = multabsaturate;
+		multabsaturate_p = multabsaturate_n;
+		multcdsaturate_n = multcdsaturate;
+		multcdsaturate_p = multcdsaturate_n;
+	END GENERATE;
+	
+	IF IS_USING_CHAINOUT() GENERATE
+		dataout[] = chainout_p[];
+	ELSE GENERATE
+		dataout[] = dataout_n[];
+	END GENERATE;
+
+	-- connect registers
+	IF IS_REGISTERED(SIGNA_CLOCK) GENERATE
+		signa_n.clk = clk[TRANSLATE_REG(SIGNA_CLOCK)];
+		signa_n.ena = ena[TRANSLATE_REG(SIGNA_CLOCK)];
+		signa_n.clrn = !aclr[TRANSLATE_REG(SIGNA_CLEAR)];
+	END GENERATE;
+
+	IF IS_REGISTERED(SIGNB_CLOCK) GENERATE
+		signb_n.clk = clk[TRANSLATE_REG(SIGNB_CLOCK)];
+		signb_n.ena = ena[TRANSLATE_REG(SIGNB_CLOCK)];
+		signb_n.clrn = !aclr[TRANSLATE_REG(SIGNB_CLEAR)];
+	END GENERATE;
+
+	IF IS_REGISTERED(ZEROACC_CLOCK) GENERATE
+		zeroacc_n.clk = clk[TRANSLATE_REG(ZEROACC_CLOCK)];
+		zeroacc_n.ena = ena[TRANSLATE_REG(ZEROACC_CLOCK)];
+		zeroacc_n.clrn = !aclr[TRANSLATE_REG(ZEROACC_CLEAR)];
+	END GENERATE;
+
+	IF IS_REGISTERED(ADDNSUB0_CLOCK) GENERATE
+		addnsub0_n.clk = clk[TRANSLATE_REG(ADDNSUB0_CLOCK)];
+		addnsub0_n.ena = ena[TRANSLATE_REG(ADDNSUB0_CLOCK)];
+		addnsub0_n.clrn = !aclr[TRANSLATE_REG(ADDNSUB0_CLEAR)];
+	END GENERATE;
+
+	IF IS_REGISTERED(ADDNSUB1_CLOCK) GENERATE
+		addnsub1_n.clk = clk[TRANSLATE_REG(ADDNSUB1_CLOCK)];
+		addnsub1_n.ena = ena[TRANSLATE_REG(ADDNSUB1_CLOCK)];
+		addnsub1_n.clrn = !aclr[TRANSLATE_REG(ADDNSUB1_CLEAR)];
+	END GENERATE;
+
+	IF IS_USING_ROUNDING() GENERATE
+		IF IS_REGISTERED(ROUND0_CLOCK) GENERATE
+			round0_n.clk = clk[TRANSLATE_REG(ROUND0_CLOCK)];
+			round0_n.ena = ena[TRANSLATE_REG(ROUND0_CLOCK)];
+			round0_n.clrn = !aclr[TRANSLATE_REG(ROUND0_CLEAR)];
+		END GENERATE;
+
+		IF IS_REGISTERED(ROUND1_CLOCK) GENERATE
+			round1_n.clk = clk[TRANSLATE_REG(ROUND1_CLOCK)];
+			round1_n.ena = ena[TRANSLATE_REG(ROUND1_CLOCK)];
+			round1_n.clrn = !aclr[TRANSLATE_REG(ROUND1_CLEAR)];
+		END GENERATE;
+		
+		IF IS_REGISTERED(ROUND0_PIPELINE_CLOCK) GENERATE
+			round0_p.clk = clk[TRANSLATE_REG(ROUND0_PIPELINE_CLOCK)];
+			round0_p.ena = ena[TRANSLATE_REG(ROUND0_PIPELINE_CLOCK)];
+			round0_p.clrn = !aclr[TRANSLATE_REG(ROUND0_PIPELINE_CLEAR)];
+		END GENERATE;
+
+		IF IS_REGISTERED(ROUND1_PIPELINE_CLOCK) GENERATE
+			round1_p.clk = clk[TRANSLATE_REG(ROUND1_PIPELINE_CLOCK)];
+			round1_p.ena = ena[TRANSLATE_REG(ROUND1_PIPELINE_CLOCK)];
+			round1_p.clrn = !aclr[TRANSLATE_REG(ROUND1_PIPELINE_CLEAR)];
+		END GENERATE;
+		
+	END GENERATE;
+
+	IF IS_USING_SATURATION() GENERATE
+		IF IS_REGISTERED(SATURATE_CLOCK) GENERATE
+			saturate_n.clk = clk[TRANSLATE_REG(SATURATE_CLOCK)];
+			saturate_n.ena = ena[TRANSLATE_REG(SATURATE_CLOCK)];
+			saturate_n.clrn = !aclr[TRANSLATE_REG(SATURATE_CLEAR)];
+		END GENERATE;
+		
+		IF IS_REGISTERED(SATURATE_PIPELINE_CLOCK) GENERATE
+			saturate_p.clk = clk[TRANSLATE_REG(SATURATE_PIPELINE_CLOCK)];
+			saturate_p.ena = ena[TRANSLATE_REG(SATURATE_PIPELINE_CLOCK)];
+			saturate_p.clrn = !aclr[TRANSLATE_REG(SATURATE_PIPELINE_CLEAR)];
+		END GENERATE;
+	END GENERATE;
+
+	IF IS_USING_MULT_SATURATION() GENERATE
+		IF IS_REGISTERED(MULTABSATURATE_CLOCK) GENERATE
+			multabsaturate_n.clk = clk[TRANSLATE_REG(MULTABSATURATE_CLOCK)];
+			multabsaturate_n.ena = ena[TRANSLATE_REG(MULTABSATURATE_CLOCK)];
+			multabsaturate_n.clrn = !aclr[TRANSLATE_REG(MULTABSATURATE_CLEAR)];
+		END GENERATE;
+
+		IF IS_REGISTERED(MULTCDSATURATE_CLOCK) GENERATE
+			multcdsaturate_n.clk = clk[TRANSLATE_REG(MULTCDSATURATE_CLOCK)];
+			multcdsaturate_n.ena = ena[TRANSLATE_REG(MULTCDSATURATE_CLOCK)];
+			multcdsaturate_n.clrn = !aclr[TRANSLATE_REG(MULTCDSATURATE_CLOCK)];
+		END GENERATE;
+		
+		IF IS_REGISTERED(MULTABSATURATE_PIPELINE_CLOCK) GENERATE
+			multabsaturate_p.clk = clk[TRANSLATE_REG(MULTABSATURATE_PIPELINE_CLOCK)];
+			multabsaturate_p.ena = ena[TRANSLATE_REG(MULTABSATURATE_PIPELINE_CLOCK)];
+			multabsaturate_p.clrn = !aclr[TRANSLATE_REG(MULTABSATURATE_PIPELINE_CLEAR)];
+		END GENERATE;
+
+		IF IS_REGISTERED(MULTCDSATURATE_PIPELINE_CLOCK) GENERATE
+			multcdsaturate_p.clk = clk[TRANSLATE_REG(MULTCDSATURATE_PIPELINE_CLOCK)];
+			multcdsaturate_p.ena = ena[TRANSLATE_REG(MULTCDSATURATE_PIPELINE_CLOCK)];
+			multcdsaturate_p.clrn = !aclr[TRANSLATE_REG(MULTCDSATURATE_PIPELINE_CLEAR)];
+		END GENERATE;
+	END GENERATE;
+
+	IF IS_REGISTERED(SIGNA_PIPELINE_CLOCK) GENERATE
+		signa_p.clk = clk[TRANSLATE_REG(SIGNA_PIPELINE_CLOCK)];
+		signa_p.ena = ena[TRANSLATE_REG(SIGNA_PIPELINE_CLOCK)];
+		signa_p.clrn = !aclr[TRANSLATE_REG(SIGNA_PIPELINE_CLEAR)];
+	END GENERATE;
+
+	IF IS_REGISTERED(SIGNB_PIPELINE_CLOCK) GENERATE
+		signb_p.clk = clk[TRANSLATE_REG(SIGNB_PIPELINE_CLOCK)];
+		signb_p.ena = ena[TRANSLATE_REG(SIGNB_PIPELINE_CLOCK)];
+		signb_p.clrn = !aclr[TRANSLATE_REG(SIGNB_PIPELINE_CLEAR)];
+	END GENERATE;
+
+	IF IS_REGISTERED(ZEROACC_PIPELINE_CLOCK) GENERATE
+		zeroacc_p.clk = clk[TRANSLATE_REG(ZEROACC_PIPELINE_CLOCK)];
+		zeroacc_p.ena = ena[TRANSLATE_REG(ZEROACC_PIPELINE_CLOCK)];
+		zeroacc_p.clrn = !aclr[TRANSLATE_REG(ZEROACC_PIPELINE_CLEAR)];
+	END GENERATE;
+
+	IF IS_REGISTERED(ADDNSUB0_PIPELINE_CLOCK) GENERATE
+		addnsub0_p.clk = clk[TRANSLATE_REG(ADDNSUB0_PIPELINE_CLOCK)];
+		addnsub0_p.ena = ena[TRANSLATE_REG(ADDNSUB0_PIPELINE_CLOCK)];
+		addnsub0_p.clrn = !aclr[TRANSLATE_REG(ADDNSUB0_PIPELINE_CLEAR)];
+	END GENERATE;
+
+	IF IS_REGISTERED(ADDNSUB1_PIPELINE_CLOCK) GENERATE
+		addnsub1_p.clk = clk[TRANSLATE_REG(ADDNSUB1_PIPELINE_CLOCK)];
+		addnsub1_p.ena = ena[TRANSLATE_REG(ADDNSUB1_PIPELINE_CLOCK)];
+		addnsub1_p.clrn = !aclr[TRANSLATE_REG(ADDNSUB1_PIPELINE_CLEAR)];
+	END GENERATE;
+
+	IF (OPERATION_MODE == MODE_ONE_LEVEL_ADDER) GENERATE
+		IF IS_REGISTERED(FIRST_ADDER0_CLOCK) GENERATE
+			addsub_p[].clk = clk[TRANSLATE_REG(FIRST_ADDER0_CLOCK)];
+			addsub_p[].ena = ena[TRANSLATE_REG(FIRST_ADDER0_CLOCK)];
+			addsub_p[].clrn = !aclr[TRANSLATE_REG(FIRST_ADDER0_CLOCK)];
+		END GENERATE;
+	END GENERATE;
+
+	IF (OPERATION_MODE == MODE_TWO_LEVEL_ADDER) # (OPERATION_MODE == MODE_TWO_LEVEL_ADDER_CHAIN_OUT) GENERATE
+		IF IS_REGISTERED(FIRST_ADDER0_CLOCK) GENERATE
+			addsub0_p[].clk = clk[TRANSLATE_REG(FIRST_ADDER0_CLOCK)];
+			addsub0_p[].ena = ena[TRANSLATE_REG(FIRST_ADDER0_CLOCK)];
+			addsub0_p[].clrn = !aclr[TRANSLATE_REG(FIRST_ADDER0_CLOCK)];
+		END GENERATE;
+
+		IF IS_REGISTERED(FIRST_ADDER1_CLOCK) GENERATE
+			addsub1_p[].clk = clk[TRANSLATE_REG(FIRST_ADDER1_CLOCK)];
+			addsub1_p[].ena = ena[TRANSLATE_REG(FIRST_ADDER1_CLOCK)];
+			addsub1_p[].clrn = !aclr[TRANSLATE_REG(FIRST_ADDER1_CLOCK)];
+		END GENERATE;
+	END GENERATE;
+
+	-- accumulator mode has output reg in accumulator itself
+	IF IS_REGISTERED(OUTPUT_CLOCK) & (OPERATION_MODE != MODE_ACCUMULATOR) GENERATE
+		dataout_n[].clk = clk[TRANSLATE_REG(OUTPUT_CLOCK)];	  
+		dataout_n[].ena = ena[TRANSLATE_REG(OUTPUT_CLOCK)];	  
+		dataout_n[].clrn = !aclr[TRANSLATE_REG(OUTPUT_CLEAR)];
+	END GENERATE;
+
+	IF IS_USING_CHAINOUT() & IS_REGISTERED(CHAINOUT_PIPELINE_CLOCK) GENERATE
+		chainout_p[].clk = clk[TRANSLATE_REG(CHAINOUT_PIPELINE_CLOCK)];
+		chainout_p[].ena = ena[TRANSLATE_REG(CHAINOUT_PIPELINE_CLOCK)];
+		chainout_p[].clrn = !aclr[TRANSLATE_REG(CHAINOUT_PIPELINE_CLEAR)];
+	END GENERATE;
+
+	END GENERATE;
+	
+	IF !USED(accoverflow) GENERATE
+		accoverflow = GND;
+	END GENERATE;
+	IF !USED(dataout) GENERATE
+		dataout[] = GND;
+	END GENERATE;
+END;

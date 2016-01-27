@@ -1,0 +1,514 @@
+--------------------------------------------------------------------------
+-- Design Name:			mpar_add										--
+-- Function: 			parallel adder for partial products addition	--
+-- Feature(s):			* used for both signed/unsigned	multiplication	--
+--						  and hence, this module is NOT a general-		--
+--						  purpose parallel adder.						--
+--						* separate control over shift and pipe clocking --
+---------------------------------------------------------------------------
+INCLUDE "lpm_add_sub";
+INCLUDE "mpar_add";
+
+PARAMETERS 
+(
+	SIZE,							-- Length of input values (in bits)
+	WIDTH,							-- Number of inputs
+	REPRESENTATION,					-- Multiplication system: UNSIGNED/SIGNED
+	LEVEL = 1,						-- Current level indicator within the tree
+	TOT_LEVELS,						-- Total number of levels of the tree 
+	STAGE = 1,						-- Current stage indicator within the pipeline.
+	TOT_STAGES = 1,					-- Total number of pipeline stages
+	INT_LATENCY,					-- internal latency of the pipeline
+	PREV_SING_SIZE = SIZE-1,		-- Size of the unpaired input
+	BOOTH_ADDER = "NO",				-- Should this module reconfigure itself for Booth algorithm?
+ 	CREATE_MS_BOOTH_ADDER = "NO",	-- Should it create the extra short adder for 
+									-- the case of even num of inputs in Booth case (used for recursions)
+	MPARADD_OP_MODE = 0				-- Used to tailor this module to the specifics of multcore
+									-- For now, OP_MODE = 2 signifies that there are grounded bits
+									-- on the second bit of each input. This helps to removed FFs
+									-- on this bits when registered so that will not get warnings
+									-- of grounded FFs
+);
+
+CONSTANT BLOCKS 		= FLOOR(WIDTH DIV 2);				-- number of input pairs
+CONSTANT REM_BLOCK 		= WIDTH MOD 2; 						-- number of unpaired inputs
+CONSTANT TOT_BLOCKS 	= CEIL(WIDTH DIV 2);				-- total count of pairings
+CONSTANT EXTRA_BITS 	= (WIDTH == 1) ? 0 : 2^(LEVEL-1);	-- number of "fall thru" bits
+CONSTANT TOT_EXTRA_BITS = (WIDTH == 1) ? 0 : (2^(TOT_LEVELS-1) - 2^(LEVEL-1));	-- added extra bits at output 
+
+-- This parameter tracks the size of "unpaired" input. This size may grow (due to
+-- pairing with another input in subsequent stages) or remain constant through many
+-- stages. This parameter is passed to next recursion level. 
+CONSTANT SING_NODE_SIZE = (WIDTH MOD 2 == 0) ? SIZE+EXTRA_BITS : 
+						  (LEVEL == 1 & REPRESENTATION == "SIGNED" ? SIZE : PREV_SING_SIZE);
+
+-- Functions used to determine whether the clock input should be connected to
+-- the registers in the current level. Need_CLK is the flag bit for that decision.
+DEFINE MOD_DIST(n, d)	= ((2 * n) > d ? d - n : n);
+DEFINE LATENCY_MOD(k)	= ((k * (INT_LATENCY + 1)) MOD TOT_STAGES);
+CONSTANT NEED_CLK		= -((LATENCY_MOD(STAGE+1) == 0) # 
+						   ((LATENCY_MOD(STAGE+1) > LATENCY_MOD(STAGE+2)) & 
+			  			    (MOD_DIST(LATENCY_MOD(STAGE+1), TOT_STAGES) < 
+							 MOD_DIST(LATENCY_MOD(STAGE+2), TOT_STAGES))) #
+			  			   ((LATENCY_MOD(STAGE+1) < LATENCY_MOD(STAGE)) & 
+						    (MOD_DIST(LATENCY_MOD(STAGE+1), TOT_STAGES) <= 
+							 MOD_DIST(LATENCY_MOD(STAGE), TOT_STAGES))));
+							
+DEFINE ADDERS_CLOCKED()	= (USED(clk) & (NEED_CLK == 1) & WIDTH > 2) ? 1 : 0;
+ 
+
+SUBDESIGN mpar_add
+( 
+	data[WIDTH-1..0][SIZE-1..0]			: INPUT = GND;
+	cin									: INPUT = GND;
+	clk, aclr							: INPUT = GND;
+	clken								: INPUT = VCC;						
+ 	result[SIZE+TOT_EXTRA_BITS-1..0] 	: OUTPUT;
+ 	clk_out, aclr_out, clken_out		: OUTPUT;		 -- for internal use of lpm_mult
+)
+
+
+VARIABLE 	
+	
+IF WIDTH > 1 GENERATE
+	IF REPRESENTATION == "UNSIGNED" GENERATE
+		----------------------------------
+		-- Unigned multiplication case
+		----------------------------------
+		adder[BLOCKS-1..0]				: lpm_add_sub WITH (LPM_WIDTH = SIZE, 
+															LPM_PIPELINE = ADDERS_CLOCKED(),
+															REGISTERED_AT_END = 1);
+
+		IF USED(CLK) & (NEED_CLK == 1) & WIDTH > 2 GENERATE
+			drop_bits_node[BLOCKS-1..0][EXTRA_BITS-1..0] : DFFE;
+		ELSE GENERATE
+			drop_bits_node[BLOCKS-1..0][EXTRA_BITS-1..0] : NODE;
+		END GENERATE;
+			
+		level_result_node[BLOCKS-1..0][SIZE-1..0]  	 : NODE;
+
+		IF REM_BLOCK == 1 GENERATE
+			IF USED(CLK) & (NEED_CLK == 1) GENERATE
+				single_input_node[SING_NODE_SIZE-1..0]	: DFFE;
+			ELSE GENERATE
+				single_input_node[SING_NODE_SIZE-1..0]	: NODE;
+			END GENERATE;
+		END GENERATE;
+
+	ELSE GENERATE
+		----------------------------------
+		-- Signed multiplication case
+		----------------------------------
+		IF REM_BLOCK == 1 & LEVEL == 1 GENERATE
+			adder[BLOCKS..0]	: lpm_add_sub WITH (LPM_WIDTH = SIZE,
+													LPM_PIPELINE = ADDERS_CLOCKED(),
+													REGISTERED_AT_END = 1);
+			
+		ELSE GENERATE
+			IF (REM_BLOCK == 0 & LEVEL == 2 & (CREATE_MS_BOOTH_ADDER == "YES")) GENERATE
+				IF (SIZE-EXTRA_BITS-2*(WIDTH-1) > 3) GENERATE
+  					booth_adder_right	: lpm_add_sub WITH (LPM_WIDTH = SIZE-EXTRA_BITS-2*(WIDTH-1)-3,
+															REGISTERED_AT_END = 1);
+				END GENERATE;
+			END GENERATE;
+
+			adder[BLOCKS-1..0]	: lpm_add_sub WITH (LPM_WIDTH = SIZE,
+													LPM_PIPELINE = ADDERS_CLOCKED(),
+													REGISTERED_AT_END = 1);
+		END GENERATE;
+
+		IF USED(CLK) & (NEED_CLK == 1) & WIDTH > 2 GENERATE
+			drop_bits_node[BLOCKS-1..0][EXTRA_BITS-1..0] : DFFE;
+		ELSE GENERATE
+			drop_bits_node[BLOCKS-1..0][EXTRA_BITS-1..0] : NODE;
+		END GENERATE;
+
+		level_result_node[BLOCKS-1..0][SIZE-1..0]  	 : NODE;
+
+		IF REM_BLOCK == 1 GENERATE
+			IF (LEVEL > 1) & USED(CLK) & (NEED_CLK == 1) GENERATE
+				single_input_node[SING_NODE_SIZE-1..0]	: DFFE;	
+			ELSE GENERATE
+				single_input_node[(LEVEL == 1 ? SIZE-1 : SING_NODE_SIZE-1)..0]	: NODE;	
+ 			END GENERATE;
+		END GENERATE;
+	END GENERATE;
+
+	IF TOT_BLOCKS > 1 GENERATE	
+		sub_par_add		: mpar_add WITH (SIZE = SIZE+EXTRA_BITS, 
+										 WIDTH = TOT_BLOCKS, 
+										 REPRESENTATION = REPRESENTATION,
+										 LEVEL = (LEVEL+1),
+										 STAGE = (STAGE+1), 
+										 TOT_LEVELS = TOT_LEVELS,
+										 TOT_STAGES = TOT_STAGES,
+										 INT_LATENCY = INT_LATENCY, 
+										 PREV_SING_SIZE = SING_NODE_SIZE,
+										 BOOTH_ADDER = "NO",
+										 CREATE_MS_BOOTH_ADDER = "NO",
+										 MPARADD_OP_MODE = MPARADD_OP_MODE);
+	END GENERATE;
+END GENERATE;	
+	
+BEGIN
+ 
+IF WIDTH > 1 GENERATE
+	IF REPRESENTATION == "UNSIGNED" GENERATE
+		-----------------------------------
+		--  UNSIGNED MULTIPLICATION    --
+		-----------------------------------
+		FOR I IN 0 TO BLOCKS-1 GENERATE
+			-- Connect all dataa inputs that are paired. Within each pair, dataa input
+			-- is shifted by EXTRA_BITS with respect to datab. Those EXTRA_BITS
+			-- bits are fall through bits. 
+			adder[I].dataa[SIZE-EXTRA_BITS-1..0] = data[I*2][SIZE-1..EXTRA_BITS];
+			adder[I].dataa[SIZE-1..SIZE-EXTRA_BITS] = GND;
+		
+			-- Level output nodes for paired inputs
+			IF (MPARADD_OP_MODE == 2) GENERATE
+				drop_bits_node[I][1..0] = (data[I*2][1] & data[I*2][0], data[I*2][0]);
+				IF (EXTRA_BITS > 2) GENERATE					
+					drop_bits_node[I][EXTRA_BITS-1..2] = data[I*2][EXTRA_BITS-1..2];
+				END GENERATE;
+			ELSE GENERATE
+				drop_bits_node[I][EXTRA_BITS-1..0] = data[I*2][EXTRA_BITS-1..0];
+			END GENERATE;
+
+			level_result_node[I][SIZE-1..0] = adder[I].result[];	
+		END GENERATE;
+	
+		IF USED(CLK) & (NEED_CLK == 1) & WIDTH > 2 GENERATE
+			adder[].(clock, aclr) = (clk, aclr);
+			drop_bits_node[][].(clk, clrn) = (clk, !aclr);
+			IF USED(clken) GENERATE
+				adder[].clken = clken;
+				drop_bits_node[][].ena = clken;
+			END GENERATE;
+		END GENERATE;
+		
+		-- Connect datab inputs, except the leftmost one. 
+		IF BLOCKS > 1 GENERATE
+			FOR I IN 0 TO BLOCKS-2 GENERATE
+				adder[I].datab[] = data[I*2+1][];
+			END GENERATE;
+		END GENERATE;	
+	
+		-- If there is an unpaired input left, then the leftmost datab surely has
+		-- received a full-length result from the previous level. Otherwise, this
+		-- datab will receive a possibly shorter input from the previous adder tree level.
+		IF REM_BLOCK == 1 GENERATE
+			adder[BLOCKS-1].datab[] = data[(BLOCKS-1)*2+1][];
+		ELSE GENERATE
+			adder[BLOCKS-1].datab[PREV_SING_SIZE-1..0] = data[(BLOCKS-1)*2+1][PREV_SING_SIZE-1..0];
+			IF PREV_SING_SIZE < SIZE GENERATE
+				-- Extend the input if its shorter than others.
+				adder[BLOCKS-1].datab[SIZE-1..PREV_SING_SIZE] = GND;
+			END GENERATE;
+		END GENERATE;
+
+		-- If there's an unpaired input, connect it to an internal register or node.
+		-- It will pass through this level without any change in size.
+		IF REM_BLOCK == 1 GENERATE
+			single_input_node[] = data[WIDTH-1][SING_NODE_SIZE-1..0];
+			
+			IF USED(CLK) & (NEED_CLK == 1) GENERATE
+				single_input_node[].(clk, clrn) = (clk, !aclr);
+				IF USED(clken) GENERATE
+					single_input_node[].ena = clken;
+				END GENERATE;
+			END GENERATE;
+		END GENERATE;
+		
+		-- If more than one total pair (which includes the unpaired input) is left
+		-- in this level, we will need another level of adders.
+		IF TOT_BLOCKS > 1 GENERATE
+			FOR I IN 0 TO BLOCKS-1 GENERATE
+				IF (MPARADD_OP_MODE == 2) GENERATE
+					IF (EXTRA_BITS == 2) GENERATE
+						sub_par_add.data[I][] = (level_result_node[I][], GND & drop_bits_node[I][1], drop_bits_node[I][0]);
+					ELSE GENERATE			
+						sub_par_add.data[I][] = (level_result_node[I][], drop_bits_node[I][EXTRA_BITS-1..2], 
+													GND & drop_bits_node[I][1], drop_bits_node[I][0]);
+					END GENERATE;
+				ELSE GENERATE
+					sub_par_add.data[I][] = (level_result_node[I][], drop_bits_node[I][]);
+				END GENERATE;
+ 			END GENERATE;
+			
+			IF REM_BLOCK == 1 GENERATE
+				sub_par_add.data[BLOCKS][SING_NODE_SIZE-1..0] = single_input_node[];
+			END GENERATE;
+			
+			result[] = sub_par_add.result[];
+			
+			IF USED(clk) GENERATE
+				sub_par_add.(clk, aclr) = (clk, aclr);
+				clk_out = sub_par_add.clk_out;
+				aclr_out = sub_par_add.aclr_out;
+				IF USED(clken) GENERATE
+					sub_par_add.clken = clken;
+					clken_out = clken_out;
+				END GENERATE; 
+			END GENERATE;
+				
+		ELSE GENERATE
+			-- Only two inputs were fed into the present stage. The result of addition
+			-- is taken from the stage's only adder's output.
+			clk_out = clk;
+			aclr_out = aclr;
+			clken_out = clken;
+		
+			IF (MPARADD_OP_MODE == 2) GENERATE
+				IF (EXTRA_BITS == 2) GENERATE
+					result[] = (level_result_node[0][], GND & drop_bits_node[0][1], drop_bits_node[0][0]);
+				ELSE GENERATE			
+					result[] = (level_result_node[0][], drop_bits_node[0][EXTRA_BITS-1..2], 
+												GND & drop_bits_node[0][1], drop_bits_node[0][0]);
+				END GENERATE;
+			ELSE GENERATE
+				result[] = (level_result_node[0][], drop_bits_node[0][]);
+			END GENERATE;
+		END GENERATE;
+	
+	ELSE GENERATE
+		-----------------------------------
+		--    SIGNED MULTIPLICATION      --
+		-----------------------------------
+		-- The situation is similar for SIGNED case with two major differences:
+		-- 1) sign extensions are performed after shifting of inputs.
+		-- 2) The first level of tree (LEVEL = 1) will have an extra adder to implement
+		-- 	  2's complement "negation", if the number of inputs is an odd number.
+		--    For even-numbered inputs, the leftmost pairing adder will use the carry input
+		--    to do the negation.
+		--
+		-- Since the same parallel adder is being used for both Booth and non-Booth
+		-- algorthms, must branch appropriately to construct the adder for each case
+ 		IF (BOOTH_ADDER == "YES" & REM_BLOCK == 0 & LEVEL == 2 & 
+											(CREATE_MS_BOOTH_ADDER == "YES")) GENERATE
+			-- In this case, an extra Booth adder will be created to speed up the
+			-- addition of the MSB Booth carry (fed through cin) 
+			IF (BLOCKS > 1) GENERATE
+ 				FOR I IN 1 TO BLOCKS-1 GENERATE
+ 					adder[I].dataa[SIZE-EXTRA_BITS-1..0] = data[I*2][SIZE-1..EXTRA_BITS];
+					adder[I].dataa[SIZE-1..SIZE-EXTRA_BITS] = data[I*2][SIZE-1];
+ 					adder[I].datab[SIZE-1..0] = data[I*2+1][SIZE-1..0];
+
+					IF (MPARADD_OP_MODE == 2) GENERATE
+						drop_bits_node[I][1..0] = (data[I*2][1] & data[I*2][0], data[I*2][0]);
+						IF (EXTRA_BITS > 2) GENERATE					
+							drop_bits_node[I][EXTRA_BITS-1..2] = (data[I*2][1] & data[I*2][0], data[I*2][0]);
+						END GENERATE;
+					ELSE GENERATE
+						drop_bits_node[I][EXTRA_BITS-1..0] = data[I*2][EXTRA_BITS-1..0];
+					END GENERATE;
+
+					level_result_node[I][SIZE-1..0] = adder[I].result[];
+				END GENERATE;
+			END GENERATE;
+
+			adder[0].dataa[2*(WIDTH-1)-1..0] = data[0][EXTRA_BITS+2*(WIDTH-1)-1..EXTRA_BITS];
+			adder[0].datab[SIZE-1..0] = data[1][SIZE-1..0];
+ 
+			-- If the adder size is short enough, will perform reduction to prevent
+			-- messages from MLS (CARRY chains ignored, etc.)
+			IF (SIZE-(EXTRA_BITS+2*(WIDTH-1)) > 0) GENERATE
+				adder[0].dataa[2*(WIDTH-1)] = (cin $ data[0][EXTRA_BITS+2*(WIDTH-1)]);
+			END GENERATE;
+
+			IF (SIZE-(EXTRA_BITS+2*(WIDTH-1)) > 1) GENERATE
+				adder[0].dataa[2*(WIDTH-1)+1] = (data[0][EXTRA_BITS+2*(WIDTH-1)+1] $
+										(cin & data[0][EXTRA_BITS+2*(WIDTH-1)]));
+			END GENERATE;
+
+			IF (SIZE-(EXTRA_BITS+2*(WIDTH-1)) > 2) GENERATE
+				adder[0].dataa[2*(WIDTH-1)+2] = (data[0][EXTRA_BITS+2*(WIDTH-1)+2] $ 
+								(cin & data[0][EXTRA_BITS+2*(WIDTH-1)+1] & 
+										data[0][EXTRA_BITS+2*(WIDTH-1)]));
+			END GENERATE;
+
+			-- If the adder is long, then create an adder for the rest of the bits
+			IF (SIZE-EXTRA_BITS-2*(WIDTH-1) > 3) GENERATE
+				booth_adder_right.dataa[0] = (cin &
+											data[0][EXTRA_BITS+2*(WIDTH-1)+2] & 
+											data[0][EXTRA_BITS+2*(WIDTH-1)+1] & 
+											data[0][EXTRA_BITS+2*(WIDTH-1)]);
+
+				IF (SIZE-EXTRA_BITS-2*(WIDTH-1) > 4) GENERATE
+					booth_adder_right.dataa[SIZE-EXTRA_BITS-2*(WIDTH-1)-3-1..1] = GND;
+				END GENERATE;
+ 
+				booth_adder_right.datab[SIZE-EXTRA_BITS-2*(WIDTH-1)-3-1..0] = 
+											data[0][SIZE-1..EXTRA_BITS+2*(WIDTH-1)+3];
+
+ 				adder[0].dataa[SIZE-EXTRA_BITS-1..2*(WIDTH-1)+3] = 
+										booth_adder_right.result[SIZE-EXTRA_BITS-2*(WIDTH-1)-3-1..0];
+				adder[0].dataa[SIZE-1..SIZE-EXTRA_BITS] = 
+										booth_adder_right.result[SIZE-EXTRA_BITS-2*(WIDTH-1)-3-1];
+			ELSE GENERATE
+				adder[0].dataa[SIZE-1..2*(WIDTH-1)+3] = 
+											(data[0][EXTRA_BITS+2*(WIDTH-1)+2] $ 
+											(cin & data[0][EXTRA_BITS+2*(WIDTH-1)+1] & 
+											 data[0][EXTRA_BITS+2*(WIDTH-1)]));
+			END GENERATE;
+
+			IF (MPARADD_OP_MODE == 2) GENERATE
+				drop_bits_node[0][1..0] = (data[0][1] & data[0][0], data[0][0]);
+				IF (EXTRA_BITS > 2) GENERATE					
+					drop_bits_node[0][EXTRA_BITS-1..2] = data[0][EXTRA_BITS-1..2];
+				END GENERATE;
+			ELSE GENERATE
+				drop_bits_node[0][EXTRA_BITS-1..0] = data[0][EXTRA_BITS-1..0];
+			END GENERATE;
+
+			level_result_node[0][SIZE-1..0] = adder[0].result[];
+
+		ELSE GENERATE
+			-- This is the normal case of parallel addition of inputs 
+			FOR I IN 0 TO BLOCKS-1 GENERATE
+				IF LEVEL == 1 GENERATE
+					adder[I].dataa[SIZE-EXTRA_BITS-2..0] = data[I*2][SIZE-2..EXTRA_BITS];
+					adder[I].dataa[SIZE-1..SIZE-EXTRA_BITS-1] = data[I*2][SIZE-2];
+				ELSE GENERATE
+					adder[I].dataa[SIZE-EXTRA_BITS-1..0] = data[I*2][SIZE-1..EXTRA_BITS];
+					adder[I].dataa[SIZE-1..SIZE-EXTRA_BITS] = data[I*2][SIZE-1];
+				END GENERATE;
+				
+				IF (MPARADD_OP_MODE == 2) GENERATE
+					drop_bits_node[I][1..0] = (data[I*2][1] & data[I*2][0], data[I*2][0]);
+					IF (EXTRA_BITS > 2) GENERATE					
+						drop_bits_node[I][EXTRA_BITS-1..2] = data[I*2][EXTRA_BITS-1..2];
+					END GENERATE;
+				ELSE GENERATE
+					drop_bits_node[I][EXTRA_BITS-1..0] = data[I*2][EXTRA_BITS-1..0];
+				END GENERATE;
+
+				level_result_node[I][SIZE-1..0] = adder[I].result[];	
+			END GENERATE;
+ 		
+			IF BLOCKS > 1 GENERATE
+				FOR I IN 0 TO BLOCKS-2 GENERATE
+					IF LEVEL == 1 GENERATE
+						adder[I].datab[SIZE-2..0] = data[I*2+1][SIZE-2..0];
+						adder[I].datab[SIZE-1] = data[I*2+1][SIZE-2];				
+					ELSE GENERATE
+						adder[I].datab[] = data[I*2+1][];
+					END GENERATE;
+				END GENERATE;
+			END GENERATE;	
+	
+			IF LEVEL == 1 GENERATE
+				adder[BLOCKS-1].datab[SIZE-2..0] = data[(BLOCKS-1)*2+1][SIZE-2..0];
+				adder[BLOCKS-1].datab[SIZE-1] = data[(BLOCKS-1)*2+1][SIZE-2];
+				
+			ELSE GENERATE
+	 			IF REM_BLOCK == 1 GENERATE
+	 				adder[BLOCKS-1].datab[] = data[(BLOCKS-1)*2+1][];
+	 				
+	 			ELSE GENERATE
+					adder[BLOCKS-1].datab[PREV_SING_SIZE-1..0] = data[(BLOCKS-1)*2+1][PREV_SING_SIZE-1..0];
+					IF PREV_SING_SIZE < SIZE GENERATE
+						adder[BLOCKS-1].datab[SIZE-1..PREV_SING_SIZE] = data[(BLOCKS-1)*2+1][PREV_SING_SIZE-1];
+					END GENERATE;
+				END GENERATE;
+			END GENERATE;
+			
+			IF REM_BLOCK == 1 GENERATE
+				IF LEVEL == 1 GENERATE
+					adder[BLOCKS].dataa[SIZE-2..0] = data[WIDTH-1][SIZE-2..0];
+					adder[BLOCKS].dataa[SIZE-1] = data[WIDTH-1][SIZE-2];				
+					adder[BLOCKS].datab[SIZE-1..1] = GND;
+					adder[BLOCKS].datab[0] = cin;					
+						
+					single_input_node[] = adder[BLOCKS].result[SIZE-1..0];
+				ELSE GENERATE
+					single_input_node[SING_NODE_SIZE-1..0] = data[WIDTH-1][SING_NODE_SIZE-1..0];	
+				
+					IF USED(CLK) & (NEED_CLK == 1) GENERATE
+						single_input_node[].(clk, clrn) = (clk, !aclr);
+						IF USED(clken) GENERATE
+							single_input_node[].ena = clken;
+						END GENERATE;
+					END GENERATE;
+				END GENERATE;
+			ELSE GENERATE
+				adder[BLOCKS-1].cin = cin;
+			END GENERATE;
+		END GENERATE;
+
+		IF USED(CLK) & (NEED_CLK == 1) & WIDTH > 2 GENERATE
+			adder[].(clock, aclr) = (clk, aclr);
+			drop_bits_node[][].(clk, clrn) = (clk, !aclr);
+
+			IF USED(clken) GENERATE
+				adder[].clken = clken;
+				drop_bits_node[][].ena = clken;
+			END GENERATE;
+		END GENERATE;
+
+		IF TOT_BLOCKS > 1 GENERATE
+			FOR I IN 0 TO BLOCKS-1 GENERATE
+				IF (MPARADD_OP_MODE == 2) GENERATE
+					IF (EXTRA_BITS == 2) GENERATE
+						sub_par_add.data[I][] = (level_result_node[I][], GND & drop_bits_node[I][1], drop_bits_node[I][0]);
+					ELSE GENERATE			
+						sub_par_add.data[I][] = (level_result_node[I][], drop_bits_node[I][EXTRA_BITS-1..2], 
+													GND & drop_bits_node[I][1], drop_bits_node[I][0]);
+					END GENERATE;
+				ELSE GENERATE
+					sub_par_add.data[I][] = (level_result_node[I][], drop_bits_node[I][]);
+				END GENERATE;
+ 			END GENERATE;
+		
+			IF REM_BLOCK == 1 GENERATE
+				IF LEVEL == 1 GENERATE
+					sub_par_add.data[BLOCKS][SIZE-1..0] = single_input_node[SIZE-1..0];
+				ELSE GENERATE
+					sub_par_add.data[BLOCKS][SING_NODE_SIZE-1..0] = single_input_node[];
+				END GENERATE;
+			END GENERATE;
+			
+			result[] = sub_par_add.result[];
+			
+			IF USED(clk) GENERATE
+				sub_par_add.(clk, aclr) = (clk, aclr);
+				clk_out = sub_par_add.clk_out;
+				aclr_out = sub_par_add.aclr_out;
+				IF USED(clken) GENERATE
+					sub_par_add.clken = clken;	
+					clken_out = clken_out;
+				END GENERATE;
+			END GENERATE;
+				
+		ELSE GENERATE
+			clk_out = clk;
+			aclr_out = aclr;
+			clken_out = clken;
+
+			IF (MPARADD_OP_MODE == 2) GENERATE
+				IF (EXTRA_BITS == 2) GENERATE
+					result[] = (level_result_node[0][], GND & drop_bits_node[0][1], drop_bits_node[0][0]);
+				ELSE GENERATE			
+					result[] = (level_result_node[0][], drop_bits_node[0][EXTRA_BITS-1..2], 
+												GND & drop_bits_node[0][1], drop_bits_node[0][0]);
+				END GENERATE;
+			ELSE GENERATE
+				result[] = (level_result_node[0][], drop_bits_node[0][]);
+			END GENERATE;
+		END GENERATE;
+	END GENERATE;
+ELSE GENERATE
+	result[] = data[0][];
+END GENERATE;	
+	IF !USED(clk_out) GENERATE
+		clk_out = GND;
+	END GENERATE;
+	IF !USED(clken_out) GENERATE
+		clken_out = GND;
+	END GENERATE;
+	IF !USED(aclr_out) GENERATE
+		aclr_out = GND;
+	END GENERATE;
+	IF !USED(result) GENERATE
+		result[] = GND;
+	END GENERATE;
+END;

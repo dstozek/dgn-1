@@ -1,0 +1,623 @@
+-----------------------------------------------------------------------------------------------------------
+-- ALT_MAC_MULT.TDF
+--
+-- Implement stratix MAC_MULT WYSIWYG using LEs (instead of DSP blocks)
+--
+--  Copyright 1991-2010 Corporation  
+--  Your use of Altera Corporation's design tools, logic functions  
+--  and other software and tools, and its AMPP partner logic  
+--  functions, and any output files from any of the foregoing  
+--  (including device programming or simulation files), and any  
+--  associated documentation or information are expressly subject  
+--  to the terms and conditions of the Altera Program License  
+--  Subscription Agreement, Altera MegaCore Function License  
+--  Agreement, or other applicable license agreement, including,  
+--  without limitation, that your use is for the sole purpose of  
+--  programming logic devices manufactured by Altera and sold by  
+--  Altera or its authorized distributors.  Please refer to the  
+--  applicable agreement for further details. 
+--  
+--  9.1 Build 350  10/07/2009   
+--
+-- Version 1.0
+--
+-----------------------------------------------------------------------------------------------------------
+
+OPTIONS NAME_SUBSTITUTION = ON;
+OPTIONS TREAT_DEFAULT_VALUE_AS_UNUSED = ON;
+
+INCLUDE "lpm_mult";
+INCLUDE "lpm_add_sub";
+
+CONSTANT REG_NONE = "none";
+
+-- NOTE: have to do this since string type gets lost if "A_" not used
+CONSTANT REG_0 = "A_0";
+CONSTANT REG_1 = "A_1";
+CONSTANT REG_2 = "A_2";
+CONSTANT REG_3 = "A_3";
+
+CONSTANT NO_CLOCK = REG_NONE;
+CONSTANT NO_CLEAR = REG_NONE;
+
+CONSTANT SIGN_REP_SIGNED = "SIGNED";
+CONSTANT SIGN_REP_UNSIGNED = "UNSIGNED";
+CONSTANT SIGN_REP_VARIABLE = "VARIABLE";
+
+CONSTANT BOOL_YES = "YES";
+CONSTANT BOOL_NO = "NO";
+CONSTANT FORMAT_215_WIDTH = 17;
+CONSTANT MAX_DATAOUT_WIDTH = 36;
+
+
+PARAMETERS
+(
+	DATAA_WIDTH,
+	DATAB_WIDTH,
+	DATAA_CLOCK = NO_CLOCK,
+	DATAB_CLOCK = NO_CLOCK,
+	SIGNA_CLOCK = NO_CLOCK,
+	SIGNB_CLOCK = NO_CLOCK,
+	OUTPUT_CLOCK = NO_CLOCK,
+	DATAA_CLEAR = NO_CLEAR,
+	DATAB_CLEAR = NO_CLEAR,
+	SIGNA_CLEAR = NO_CLEAR,
+	SIGNB_CLEAR = NO_CLEAR,
+	OUTPUT_CLEAR = NO_CLEAR,
+	
+	-- Params not common to all devices
+	ROUND_CLOCK = NO_CLOCK,
+	ROUND_CLEAR = NO_CLEAR,
+	SATURATE_CLOCK = NO_CLOCK,
+	SATURATE_CLEAR = NO_CLEAR,
+	BYPASS_MULTIPLIER = BOOL_NO,
+	
+	DYNAMIC_SCAN_CHAIN_SUPPORTED = BOOL_NO,
+	USING_ROUNDING = BOOL_NO,
+	USING_SATURATION = BOOL_NO,
+
+	-- The following params are extra to the WYSIWYG but allow 
+	-- greater control over the implementation for more optimization
+	-- and more flexiblity
+	EXTRA_OUTPUT_CLOCK = NO_CLOCK,
+	EXTRA_SIGNA_CLOCK = NO_CLOCK,
+	EXTRA_SIGNB_CLOCK = NO_CLOCK,
+	EXTRA_OUTPUT_CLEAR = NO_CLEAR,
+	EXTRA_SIGNA_CLEAR = NO_CLEAR,
+	EXTRA_SIGNB_CLEAR = NO_CLEAR,
+
+	MULT_PIPELINE = 0,
+	MULT_CLOCK = NO_CLOCK,
+	MULT_CLEAR = NO_CLEAR,
+	MULT_REPRESENTATION_A = SIGN_REP_VARIABLE,
+	MULT_REPRESENTATION_B = SIGN_REP_VARIABLE,
+
+	MULT_INPUT_A_IS_CONSTANT = "NO",
+	MULT_INPUT_B_IS_CONSTANT = "NO",
+	MULT_INPUT_A_FIXED_VALUE = "Bx",
+	MULT_INPUT_B_FIXED_VALUE = "Bx",
+	MULT_MAXIMIZE_SPEED = 5,
+	CBXI_PARAMETER = "NOTHING"
+);
+
+FUNCTION @CBXI_PARAMETER (dataa[DATAA_WIDTH-1..0], datab[DATAB_WIDTH-1..0], signa, signb, aclr[3..0], clk[3..0], ena[3..0], scanina[DATAA_WIDTH-1..0], scaninb[DATAB_WIDTH-1..0], sourcea, sourceb, round, saturate, mode, zeroacc)
+RETURNS (dataout[DATAOUT_WIDTH-1..0], scanouta[DATAA_WIDTH-1..0], scanoutb[DATAB_WIDTH-1..0]);
+
+------------
+-- Macros --
+------------
+
+CONSTANT NUM_CLOCK_PORTS = 4;
+CONSTANT NUM_CLEAR_PORTS = 4;
+
+CONSTANT DATAOUT_WIDTH = DATAA_WIDTH + DATAB_WIDTH;
+
+CONSTANT NUM_115_EXTRA_BITS = DATAOUT_WIDTH > FORMAT_215_WIDTH ? DATAOUT_WIDTH - FORMAT_215_WIDTH : 0;
+CONSTANT ROUND_CONSTANT = 1 * (2 ^ (NUM_115_EXTRA_BITS - 1));
+
+-- multipliers saturate to Q2.31 always
+CONSTANT QSIGN_WIDTH = 2;
+CONSTANT QSATURATION_WIDTH = 31;
+CONSTANT QSAT_FULL_WIDTH = QSIGN_WIDTH + QSATURATION_WIDTH;
+
+-- indicates if mult sign representation is constant
+DEFINE MULT_REP_IS_CONSTANT() = MULT_REPRESENTATION_A != SIGN_REP_VARIABLE &
+								MULT_REPRESENTATION_B != SIGN_REP_VARIABLE &
+								MULT_REPRESENTATION_A == MULT_REPRESENTATION_B;
+
+DEFINE MULT_REPRESENTATION() = MULT_REP_IS_CONSTANT() ? 
+								MULT_REPRESENTATION_A : SIGN_REP_SIGNED;
+
+DEFINE EXTEND_A() = MULT_REPRESENTATION() != MULT_REPRESENTATION_A;
+DEFINE MULT_WIDTHA() = EXTEND_A() ? DATAA_WIDTH + 1 : DATAA_WIDTH;
+
+DEFINE EXTEND_B() = MULT_REPRESENTATION() != MULT_REPRESENTATION_B;
+DEFINE MULT_WIDTHB() = EXTEND_B() ? DATAB_WIDTH + 1 : DATAB_WIDTH;
+
+DEFINE IS_REGISTERED(clock) = clock != NO_CLOCK;
+
+DEFINE TRANSLATE_REG(clock) = clock == REG_0 ? 0 :
+							clock == REG_1 ? 1 :
+							clock == REG_2 ? 2 :
+							clock == REG_3 ? 3 :
+							-1;
+
+DEFINE IS_DYNAMIC_SCAN_CHAIN_SUPPORTED() = DYNAMIC_SCAN_CHAIN_SUPPORTED == BOOL_YES;
+DEFINE IS_USING_ROUNDING() = USING_ROUNDING == BOOL_YES;
+DEFINE IS_USING_SATURATION() = USING_SATURATION == BOOL_YES;
+DEFINE IS_BYPASS_MULTIPLIER() = BYPASS_MULTIPLIER == BOOL_YES;
+
+
+SUBDESIGN alt_mac_mult
+(
+	dataa[DATAA_WIDTH - 1..0]			:	INPUT = GND;
+	datab[DATAB_WIDTH - 1..0]			:	INPUT = GND;
+
+	signa								:	INPUT = VCC;
+	signb								:	INPUT = VCC;
+
+	clk[3..0]							:	INPUT = GND;
+	aclr[3..0]							:	INPUT = GND;
+	ena[3..0]							:	INPUT = VCC;
+
+	dataout[DATAOUT_WIDTH - 1..0]		:	OUTPUT;
+	scanouta[DATAA_WIDTH - 1..0]		:	OUTPUT;
+	scanoutb[DATAB_WIDTH - 1..0]		:	OUTPUT;
+	
+	-- Ports not common to all devices
+	scanina[DATAA_WIDTH - 1..0]			:	INPUT = GND;
+	scaninb[DATAB_WIDTH - 1..0]			:	INPUT = GND;
+	sourcea								:	INPUT = GND;
+	sourceb								:	INPUT = GND;	
+
+	round								:	INPUT = GND;
+	saturate							:	INPUT = GND;	
+	mode								:	INPUT = GND;	
+	zeroacc								:	INPUT = GND;	
+)
+VARIABLE
+
+	IF (CBXI_PARAMETER != "NOTHING") GENERATE
+		auto_generated : @CBXI_PARAMETER WITH (CBXI_PARAMETER = "NOTHING");
+	ELSE GENERATE
+
+	-- Dummy wires to get rid of warnings
+	dummy_clk[3..0]			: NODE;
+	dummy_ena[3..0]			: NODE;
+	dummy_aclr[3..0]		: NODE;
+
+	sourcea_wire    :   NODE;
+	sourceb_wire    :   NODE;
+	round_wire      :   NODE;
+	saturate_wire   :   NODE;
+
+	IF IS_REGISTERED(DATAA_CLOCK) GENERATE
+		dataa_n[DATAA_WIDTH - 1..0] : DFFE;
+	ELSE GENERATE
+		dataa_n[DATAA_WIDTH - 1..0] : NODE;
+	END GENERATE;
+
+	IF IS_REGISTERED(DATAB_CLOCK) GENERATE
+		datab_n[DATAB_WIDTH - 1..0] : DFFE;
+	ELSE GENERATE
+		datab_n[DATAB_WIDTH - 1..0] : NODE;
+	END GENERATE;
+
+	IF IS_REGISTERED(OUTPUT_CLOCK) GENERATE
+		dataout_n[DATAOUT_WIDTH - 1..0] : DFFE;
+	ELSE GENERATE
+		dataout_n[DATAOUT_WIDTH - 1..0] : NODE;
+	END GENERATE;
+	
+	IF IS_REGISTERED(EXTRA_OUTPUT_CLOCK) GENERATE
+		dataout_en[DATAOUT_WIDTH - 1..0] : DFFE;
+	ELSE GENERATE
+		IF !IS_BYPASS_MULTIPLIER() GENERATE
+			dataout_en[DATAOUT_WIDTH - 1..0] : NODE;
+		END GENERATE;
+	END GENERATE;	
+
+	IF !IS_BYPASS_MULTIPLIER() GENERATE
+	
+		IF IS_REGISTERED(SIGNA_CLOCK) GENERATE
+			signa_n : DFFE;
+		ELSE GENERATE
+			signa_n : NODE;
+		END GENERATE;
+
+		IF IS_REGISTERED(SIGNB_CLOCK) GENERATE
+			signb_n : DFFE;
+		ELSE GENERATE
+			signb_n : NODE;
+		END GENERATE;
+
+
+		IF IS_REGISTERED(EXTRA_SIGNA_CLOCK) GENERATE
+			signa_en : DFFE;
+		ELSE GENERATE
+			signa_en : NODE;
+		END GENERATE;
+
+		IF IS_REGISTERED(EXTRA_SIGNB_CLOCK) GENERATE
+			signb_en : DFFE;
+		ELSE GENERATE
+			signb_en : NODE;
+		END GENERATE;
+		
+		IF IS_USING_ROUNDING() GENERATE
+			IF IS_REGISTERED(ROUND_CLOCK) GENERATE
+				round_n : DFFE;
+			ELSE GENERATE
+				round_n : NODE;
+			END GENERATE;
+			
+			round_sum : lpm_add_sub WITH (	LPM_WIDTH = DATAOUT_WIDTH,
+											LPM_REPRESENTATION = MULT_REPRESENTATION(),
+											LPM_DIRECTION = "ADD",
+											LPM_PIPELINE = 0,
+											ONE_INPUT_IS_CONSTANT = "UNUSED",
+											REGISTERED_AT_END = "UNUSED"
+											);
+
+		END GENERATE;	
+
+		IF IS_USING_SATURATION() GENERATE
+			IF IS_REGISTERED(SATURATE_CLOCK) GENERATE
+				saturate_n : DFFE;
+			ELSE GENERATE
+				saturate_n : NODE;
+			END GENERATE;
+			
+		END GENERATE;
+		
+		-- Connections between round, saturate, and the zero
+		wire1[DATAOUT_WIDTH - 1..0] : NODE;  -- Wire from mult to rounding
+		wire2[DATAOUT_WIDTH - 1..0] : NODE;	 -- Wire from rounding to saturation
+		wire3[DATAOUT_WIDTH - 1..0] : NODE;  -- Wire from saturation to rounding LSBs
+		wire4[DATAOUT_WIDTH - 1..0] : NODE;  -- Wire from rounding LSBs to setting overflow bit
+
+		IF IS_USING_SATURATION() GENERATE
+			saturate_control_one		: NODE;
+			IF DATAOUT_WIDTH == MAX_DATAOUT_WIDTH GENERATE
+				saturate_control_two		: NODE;	
+			END GENERATE;
+		END GENERATE;
+
+		mult : lpm_mult WITH (LPM_WIDTHA = MULT_WIDTHA(),
+							LPM_WIDTHB = MULT_WIDTHB(),
+							LPM_WIDTHP = MULT_WIDTHA() + MULT_WIDTHB(),
+							LPM_REPRESENTATION = MULT_REPRESENTATION(),
+							LPM_PIPELINE = MULT_PIPELINE,
+							INPUT_A_IS_CONSTANT = MULT_INPUT_A_IS_CONSTANT,
+							INPUT_B_IS_CONSTANT = MULT_INPUT_B_IS_CONSTANT,
+							INPUT_A_FIXED_VALUE = MULT_INPUT_A_FIXED_VALUE,
+							INPUT_B_FIXED_VALUE = MULT_INPUT_B_FIXED_VALUE,
+							MAXIMIZE_SPEED = MULT_MAXIMIZE_SPEED,
+							DEDICATED_MULTIPLIER_CIRCUITRY = "NO",
+							DSP_BLOCK_BALANCING = "Logic Elements",
+							LPM_WIDTHR = "UNUSED",
+							LATENCY = "UNUSED",
+							USE_EAB = "UNUSED");
+	ELSE GENERATE
+
+		-- Bogus sign wires
+		signa_wire : NODE;
+		signb_wire : NODE;		
+
+	END GENERATE;
+	END GENERATE;
+	
+BEGIN
+
+	IF (CBXI_PARAMETER != "NOTHING") GENERATE
+--		IF USED(dataa) GENERATE
+			auto_generated.dataa[] = dataa[];
+--		END GENERATE;
+--		IF USED(datab) GENERATE
+			auto_generated.datab[] = datab[];
+--		END GENERATE;
+		IF USED(signa) GENERATE
+			auto_generated.signa = signa;
+		END GENERATE;
+		IF USED(signb) GENERATE
+			auto_generated.signb = signb;
+		END GENERATE;
+		IF USED(clk) GENERATE
+			auto_generated.clk[] = clk[];
+		END GENERATE;
+		IF USED(ena) GENERATE
+			auto_generated.ena[] = ena[];
+		END GENERATE;
+		IF USED(aclr) GENERATE
+			auto_generated.aclr[] = aclr[];
+		END GENERATE;
+		IF USED(scanina) GENERATE
+			auto_generated.scanina[] = scanina[];
+		END GENERATE;
+		IF USED(scaninb) GENERATE
+			auto_generated.scaninb[] = scaninb[];
+		END GENERATE;
+		IF USED(sourcea) GENERATE
+			auto_generated.sourcea[] = sourcea[];
+		END GENERATE;
+		IF USED(sourceb) GENERATE
+			auto_generated.sourceb[] = sourceb[];
+		END GENERATE;
+		IF USED(round) GENERATE
+			auto_generated.round = round;
+		END GENERATE;
+		IF USED(saturate) GENERATE
+			auto_generated.saturate = saturate;
+		END GENERATE;
+		IF USED(mode) GENERATE
+			auto_generated.mode = mode;
+		END GENERATE;
+		IF USED(zeroacc) GENERATE
+			auto_generated.zeroacc = zeroacc;
+		END GENERATE;
+		IF USED(dataout) GENERATE
+			dataout[] = auto_generated.dataout[];
+		ELSE GENERATE
+			dataout[] = GND;
+		END GENERATE;
+		IF USED(scanouta) GENERATE
+			scanouta[] = auto_generated.scanouta[];
+		ELSE GENERATE
+			scanouta[] = GND;
+		END GENERATE;
+		IF USED(scanoutb) GENERATE
+			scanoutb[] = auto_generated.scanoutb[];
+		ELSE GENERATE
+			scanoutb[] = GND;
+		END GENERATE;
+	ELSE GENERATE
+	-- Dummy wires to get rid of warnings
+	dummy_clk[3..0] = clk[3..0];
+	dummy_ena[3..0]	= ena[3..0];
+	dummy_aclr[3..0] = aclr[3..0];
+
+	round_wire = round;
+	saturate_wire = saturate;
+	sourcea_wire = sourcea;
+	sourceb_wire = sourceb;
+
+	-- DATAA AND DATAB
+	IF IS_DYNAMIC_SCAN_CHAIN_SUPPORTED() GENERATE
+		dataa_n[] = (sourcea_wire & scanina[]) # (!sourcea_wire & dataa[]);
+	ELSE GENERATE
+		dataa_n[] = dataa[];
+	END GENERATE;
+
+	IF IS_DYNAMIC_SCAN_CHAIN_SUPPORTED() GENERATE
+		datab_n[] = (sourceb_wire & scaninb[]) # (!sourceb_wire & datab[]);
+	ELSE GENERATE
+		datab_n[] = datab[];
+	END GENERATE;
+
+	IF IS_BYPASS_MULTIPLIER() GENERATE
+
+		signa_wire = signa;
+		signb_wire = signb;
+		
+		IF IS_USING_ROUNDING() GENERATE
+			round_wire = round;
+		END GENERATE;
+		IF IS_USING_SATURATION() GENERATE
+			saturate_wire = saturate;
+		END GENERATE;
+
+		-- In bypass multiplier mode, just feed the MSBs of the dataout register with DATAA, and the LSBs
+		-- with DATAB
+		dataout_n[DATAOUT_WIDTH-1..DATAB_WIDTH] = dataa_n[DATAA_WIDTH-1..0];
+		dataout_n[DATAB_WIDTH-1..0] = datab_n[DATAA_WIDTH-1..0];
+		dataout[] = dataout_n[];
+
+		IF IS_REGISTERED(DATAA_CLOCK) GENERATE
+			dataa_n[].clk = clk[TRANSLATE_REG(DATAA_CLOCK)];
+			dataa_n[].ena = ena[TRANSLATE_REG(DATAA_CLOCK)];
+			dataa_n[].clrn = !aclr[TRANSLATE_REG(DATAA_CLEAR)];
+		END GENERATE;
+
+		IF IS_REGISTERED(DATAB_CLOCK) GENERATE
+			datab_n[].clk = clk[TRANSLATE_REG(DATAB_CLOCK)];
+			datab_n[].ena = ena[TRANSLATE_REG(DATAB_CLOCK)];
+			datab_n[].clrn = !aclr[TRANSLATE_REG(DATAB_CLEAR)];
+		END GENERATE;
+			
+	ELSE GENERATE
+		signa_n = signa;
+		signa_en = signa_n;
+		mult.dataa[DATAA_WIDTH-1..0] = dataa_n[DATAA_WIDTH-1..0];
+		IF MULT_REPRESENTATION_A == SIGN_REP_VARIABLE GENERATE
+			-- set MSB of lpm_mult based on dynamic sign signal
+			mult.dataa[DATAA_WIDTH] = signa_en & dataa_n[DATAA_WIDTH-1];
+		ELSE GENERATE
+			IF (MULT_WIDTHA() > DATAA_WIDTH) GENERATE
+				-- representation is unsigned, but lpm_mult is set to signed: set MSB to 0
+				mult.dataa[DATAA_WIDTH] = GND;
+			END GENERATE;
+		END GENERATE;
+
+		signb_n = signb;
+		signb_en = signb_n;
+		mult.datab[DATAB_WIDTH-1..0] = datab_n[DATAB_WIDTH-1..0];
+		IF MULT_REPRESENTATION_B == SIGN_REP_VARIABLE GENERATE
+			-- set MSB of lpm_mult based on dynamic sign signal
+			mult.datab[DATAB_WIDTH] = signb_en & datab_n[DATAB_WIDTH-1];
+		ELSE GENERATE
+			IF (MULT_WIDTHB() > DATAB_WIDTH) GENERATE
+				-- representation is unsigned, but lpm_mult is set to signed: set MSB to 0
+				mult.datab[DATAB_WIDTH] = GND;
+			END GENERATE;
+		END GENERATE;
+			
+		-- Rounding
+		IF IS_USING_ROUNDING() GENERATE
+			round_n = round;
+			-- Only round if width of the number is longer than the width for a 1.15
+			-- number.
+			
+			IF (DATAOUT_WIDTH > FORMAT_215_WIDTH) GENERATE
+				round_sum.dataa[DATAOUT_WIDTH-1..0] = mult.result[DATAOUT_WIDTH-1..0];
+				round_sum.datab[DATAOUT_WIDTH-1..0] = ROUND_CONSTANT;
+				
+				wire1[DATAOUT_WIDTH-1..0] = ( (round_n &  round_sum.result[DATAOUT_WIDTH-1..0]   ) #
+											  (!round_n & (mult.result[DATAOUT_WIDTH-1..0]))  );
+				
+			ELSE GENERATE
+				wire1[DATAOUT_WIDTH-1..0] = mult.result[DATAOUT_WIDTH-1..0];
+			END GENERATE;	
+		ELSE GENERATE
+			wire1[DATAOUT_WIDTH-1..0] = mult.result[DATAOUT_WIDTH-1..0];	
+		END GENERATE;
+
+		-- Saturation
+		-- Do only if the two MSBs are not the same
+		IF IS_USING_SATURATION() GENERATE
+			saturate_n = saturate;
+		
+			IF DATAOUT_WIDTH > QSIGN_WIDTH GENERATE
+				saturate_control_one = saturate_n & (!wire1[DATAOUT_WIDTH-1] & wire1[DATAOUT_WIDTH-2]);
+
+				wire2[DATAOUT_WIDTH-1..DATAOUT_WIDTH-QSIGN_WIDTH] = !saturate_control_one & wire1[DATAOUT_WIDTH-1..DATAOUT_WIDTH-QSIGN_WIDTH];
+
+				IF DATAOUT_WIDTH > QSAT_FULL_WIDTH GENERATE
+					wire2[DATAOUT_WIDTH-QSIGN_WIDTH-1..DATAOUT_WIDTH-QSAT_FULL_WIDTH] = saturate_control_one # (!saturate_control_one & wire1[DATAOUT_WIDTH-QSIGN_WIDTH-1..DATAOUT_WIDTH-QSAT_FULL_WIDTH]);
+					wire2[DATAOUT_WIDTH-QSAT_FULL_WIDTH-1..0] = !saturate_control_one & wire1[DATAOUT_WIDTH-QSAT_FULL_WIDTH-1..0];
+				ELSE GENERATE
+					wire2[DATAOUT_WIDTH-QSIGN_WIDTH-1..0] = saturate_control_one # (!saturate_control_one & wire1[DATAOUT_WIDTH-QSIGN_WIDTH-1..0]);
+				END GENERATE;
+
+			ELSE GENERATE
+				-- too small to be using saturation
+				wire2[DATAOUT_WIDTH-1..0] = wire1[DATAOUT_WIDTH-1..0];
+			END GENERATE;
+
+		ELSE GENERATE
+			wire2[DATAOUT_WIDTH-1..0] = wire1[DATAOUT_WIDTH-1..0];	
+		END GENERATE;
+
+		-- Zero out the lower bits
+		IF IS_USING_ROUNDING() GENERATE
+		
+			IF DATAOUT_WIDTH > FORMAT_215_WIDTH GENERATE
+				wire3[DATAOUT_WIDTH-1..NUM_115_EXTRA_BITS] = wire2[DATAOUT_WIDTH-1..NUM_115_EXTRA_BITS];
+				IF NUM_115_EXTRA_BITS > 0 GENERATE
+					wire3[NUM_115_EXTRA_BITS-1..0] = (round_n & GND) # (!round_n & wire2[NUM_115_EXTRA_BITS-1..0]);
+				END GENERATE;	
+			ELSE GENERATE
+				wire3[DATAOUT_WIDTH-1..0] = wire2[DATAOUT_WIDTH-1..0];
+			END GENERATE;
+			
+		ELSE GENERATE
+			wire3[DATAOUT_WIDTH-1..0] = wire2[DATAOUT_WIDTH-1..0];
+		END GENERATE;
+			
+		-- If dataout width is 36, set the LSB to 1 if saturation occurred.
+		IF IS_USING_SATURATION() GENERATE
+		
+			IF DATAOUT_WIDTH == MAX_DATAOUT_WIDTH GENERATE
+				saturate_control_two = saturate_n & (!wire1[DATAOUT_WIDTH-1] & wire1[DATAOUT_WIDTH-2]);
+				wire4[DATAOUT_WIDTH-1..1] = wire3[DATAOUT_WIDTH-1..1];
+				wire4[0] = saturate_control_two # (!saturate_control_two & wire3[0]);
+			ELSE GENERATE
+				wire4[DATAOUT_WIDTH-1..0] = wire3[DATAOUT_WIDTH-1..0];
+			END GENERATE;
+		ELSE GENERATE
+			wire4[DATAOUT_WIDTH-1..0] = wire3[DATAOUT_WIDTH-1..0];
+		END GENERATE;
+		
+		dataout_n[DATAOUT_WIDTH-1..0] = wire4[DATAOUT_WIDTH-1..0];
+		dataout_en[] = dataout_n[];
+		dataout[] = dataout_en[];
+
+		scanouta[] = dataa_n[];
+		scanoutb[] = datab_n[];
+
+		-- connect registers as specified
+
+		IF IS_REGISTERED(DATAA_CLOCK) GENERATE
+			dataa_n[].clk = clk[TRANSLATE_REG(DATAA_CLOCK)];
+			dataa_n[].ena = ena[TRANSLATE_REG(DATAA_CLOCK)];
+			dataa_n[].clrn = !aclr[TRANSLATE_REG(DATAA_CLEAR)];
+		END GENERATE;
+
+		IF IS_REGISTERED(DATAB_CLOCK) GENERATE
+			datab_n[].clk = clk[TRANSLATE_REG(DATAB_CLOCK)];
+			datab_n[].ena = ena[TRANSLATE_REG(DATAB_CLOCK)];
+			datab_n[].clrn = !aclr[TRANSLATE_REG(DATAB_CLEAR)];
+		END GENERATE;
+
+		IF IS_REGISTERED(SIGNA_CLOCK) GENERATE
+			signa_n.clk = clk[TRANSLATE_REG(SIGNA_CLOCK)];
+			signa_n.ena = ena[TRANSLATE_REG(SIGNA_CLOCK)];
+			signa_n.clrn = !aclr[TRANSLATE_REG(SIGNA_CLEAR)];
+		END GENERATE;
+
+		IF IS_REGISTERED(SIGNB_CLOCK) GENERATE
+			signb_n.clk = clk[TRANSLATE_REG(SIGNB_CLOCK)];
+			signb_n.ena = ena[TRANSLATE_REG(SIGNB_CLOCK)];
+			signb_n.clrn = !aclr[TRANSLATE_REG(SIGNB_CLEAR)];
+		END GENERATE;
+
+		IF IS_REGISTERED(EXTRA_SIGNA_CLOCK) GENERATE
+			signa_en.clk = clk[TRANSLATE_REG(EXTRA_SIGNA_CLOCK)];	 
+			signa_en.ena = ena[TRANSLATE_REG(EXTRA_SIGNA_CLOCK)];	 
+			signa_en.clrn = !aclr[TRANSLATE_REG(EXTRA_SIGNA_CLEAR)];
+		END GENERATE;
+
+		IF IS_REGISTERED(EXTRA_SIGNB_CLOCK) GENERATE
+			signb_en.clk = clk[TRANSLATE_REG(EXTRA_SIGNB_CLOCK)];	
+			signb_en.ena = ena[TRANSLATE_REG(EXTRA_SIGNB_CLOCK)];	
+			signb_en.clrn = !aclr[TRANSLATE_REG(EXTRA_SIGNB_CLEAR)];
+		END GENERATE;
+
+		IF IS_REGISTERED(MULT_CLOCK) GENERATE
+			mult.clock = clk[TRANSLATE_REG(MULT_CLOCK)];
+			mult.clken = ena[TRANSLATE_REG(MULT_CLOCK)];
+			mult.aclr = aclr[TRANSLATE_REG(MULT_CLEAR)];
+		END GENERATE;
+		
+		IF IS_USING_ROUNDING() GENERATE
+			IF IS_REGISTERED(ROUND_CLOCK) GENERATE
+				round_n.clk = clk[TRANSLATE_REG(ROUND_CLOCK)];
+				round_n.ena = ena[TRANSLATE_REG(ROUND_CLOCK)];
+				round_n.clrn = !aclr[TRANSLATE_REG(ROUND_CLEAR)];
+			END GENERATE;
+		END GENERATE;
+
+		IF IS_USING_SATURATION() GENERATE
+			IF IS_REGISTERED(SATURATE_CLOCK) GENERATE
+				saturate_n.clk = clk[TRANSLATE_REG(SATURATE_CLOCK)];
+				saturate_n.ena = ena[TRANSLATE_REG(SATURATE_CLOCK)];
+				saturate_n.clrn = !aclr[TRANSLATE_REG(SATURATE_CLEAR)];
+			END GENERATE;
+		END GENERATE;
+			
+	END GENERATE;	
+
+	-- The connections of the dataout register have to be generated regardless of whether
+	-- the mult is bypassing the multiplier or not
+	IF IS_REGISTERED(OUTPUT_CLOCK) GENERATE
+		dataout_n[].clk = clk[TRANSLATE_REG(OUTPUT_CLOCK)];
+		dataout_n[].ena = ena[TRANSLATE_REG(OUTPUT_CLOCK)];
+		dataout_n[].clrn = !aclr[TRANSLATE_REG(OUTPUT_CLEAR)];
+	END GENERATE;
+
+	IF IS_REGISTERED(EXTRA_OUTPUT_CLOCK) GENERATE
+		dataout_en[].clk = clk[TRANSLATE_REG(EXTRA_OUTPUT_CLOCK)];	  
+		dataout_en[].ena = ena[TRANSLATE_REG(EXTRA_OUTPUT_CLOCK)];	  
+		dataout_en[].clrn = !aclr[TRANSLATE_REG(EXTRA_OUTPUT_CLEAR)];
+	END GENERATE;
+	END GENERATE;
+
+	IF !USED(scanoutb) GENERATE
+		scanoutb[] = GND;
+	END GENERATE;
+	IF !USED(scanouta) GENERATE
+		scanouta[] = GND;
+	END GENERATE;
+	IF !USED(dataout) GENERATE
+		dataout[] = GND;
+	END GENERATE;
+END;

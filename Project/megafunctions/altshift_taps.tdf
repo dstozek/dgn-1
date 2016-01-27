@@ -1,0 +1,210 @@
+--------------------------------------------------------------------
+--
+--	ALTSHIFT_TAPS Parameterized Megafunction
+--
+--  Copyright 1991-2010 Corporation  
+--  Your use of Altera Corporation's design tools, logic functions  
+--  and other software and tools, and its AMPP partner logic  
+--  functions, and any output files from any of the foregoing  
+--  (including device programming or simulation files), and any  
+--  associated documentation or information are expressly subject  
+--  to the terms and conditions of the Altera Program License  
+--  Subscription Agreement, Altera MegaCore Function License  
+--  Agreement, or other applicable license agreement, including,  
+--  without limitation, that your use is for the sole purpose of  
+--  programming logic devices manufactured by Altera and sold by  
+--  Altera or its authorized distributors.  Please refer to the  
+--  applicable agreement for further details. 
+--  
+--  9.1 Build 350  10/07/2009   
+--
+--	Version 1.0
+--
+--------------------------------------------------------------------
+OPTIONS NAME_SUBSTITUTION = ON;
+OPTIONS TREAT_DEFAULT_VALUE_AS_UNUSED = ON;
+
+INCLUDE "altdpram.inc";
+INCLUDE "lpm_counter.inc";
+INCLUDE "lpm_compare.inc";
+INCLUDE "lpm_constant.inc";
+
+PARAMETERS
+(
+	NUMBER_OF_TAPS,
+	TAP_DISTANCE,
+	WIDTH,
+	POWER_UP_STATE = "CLEARED",	-- "CLEARED" (M512 or M4K), or "DONT_CARE" (MegaRAM)
+	CBXI_PARAMETER = "NOTHING"
+);
+FUNCTION @CBXI_PARAMETER (shiftin[WIDTH-1..0], clock, clken, aclr) RETURNS (shiftout[WIDTH - 1..0], taps[(WIDTH * NUMBER_OF_TAPS) - 1..0]);
+
+CONSTANT RAM_WIDTH = WIDTH * NUMBER_OF_TAPS;
+CONSTANT RAM_WIDTHAD = CEIL(LOG2(TAP_DISTANCE));
+
+SUBDESIGN altshift_taps
+(
+	shiftin[WIDTH-1..0]					: INPUT; 
+	clock								: INPUT;
+	clken								: INPUT = VCC ;
+	shiftout[WIDTH-1..0]				: OUTPUT;
+	taps[(WIDTH*NUMBER_OF_TAPS )-1..0]	: OUTPUT;
+	aclr					: INPUT = GND;
+)
+
+VARIABLE
+	IF (CBXI_PARAMETER == "NOTHING") GENERATE
+		-- Instantiate a simple-dual-port RAM to hold the shift register contents
+		shiftram	: altdpram WITH (
+							WIDTH=RAM_WIDTH,
+							WIDTHAD=RAM_WIDTHAD,
+							NUMWORDS=TAP_DISTANCE,
+							INDATA_REG="INCLOCK",
+							WRADDRESS_REG="INCLOCK",
+							WRCONTROL_REG="INCLOCK",
+							RDADDRESS_REG="INCLOCK",
+							RDCONTROL_REG="INCLOCK",
+							OUTDATA_REG="OUTCLOCK",
+							OUTDATA_ACLR = "ON",
+							SUPPRESS_MEMORY_CONVERSION_WARNINGS="ON",
+							READ_DURING_WRITE_MODE_MIXED_PORTS=(POWER_UP_STATE == "CLEARED" ? "OLD_DATA" : "DONT_CARE")
+						);
+		
+		-- The distance between taps is the number of memory words that will be needed
+		-- If more than 1 word is needed, we will need to provide read and write addresses
+		IF (TAP_DISTANCE > 1) GENERATE
+			rdcnt[RAM_WIDTHAD-1..0] : WIRE;
+			wrcnt[RAM_WIDTHAD-1..0] : WIRE;
+			
+			-- For the 2 word case, a single counter is sufficient
+			wcnt  : lpm_counter WITH (LPM_WIDTH=RAM_WIDTHAD, LPM_MODULUS=TAP_DISTANCE, LPM_DIRECTION="UP");
+			
+			IF (TAP_DISTANCE > 2) GENERATE
+				-- For the 3 or more word case, tThe read address must be 2 words ahead of
+				-- the write address to compensate for the 2 registers in the read path.
+				rcnt0 : lpm_counter WITH (LPM_WIDTH=1, LPM_DIRECTION="UP", USE_NEW_VERSION="FALSE");
+				-- bit 2 of the read counter is special because the read counter
+				-- must power-up to a value of 2.
+				rcnt1 : lpm_counter WITH (LPM_WIDTH=1, LPM_DIRECTION="DOWN", USE_NEW_VERSION="FALSE");
+
+				-- If the TAP distance is not a power of 2, need to wrap
+				-- but can't use internal modulus since we have a custom counter
+				IF (TAP_DISTANCE != 2^RAM_WIDTHAD) GENERATE
+					rcnt_max : lpm_compare WITH (LPM_WIDTH=RAM_WIDTHAD, ONE_INPUT_IS_CONSTANT="YES");
+					rcnt_const : lpm_constant WITH (LPM_WIDTH=RAM_WIDTHAD, LPM_CVALUE=TAP_DISTANCE-1);
+				END GENERATE;
+			
+				IF (TAP_DISTANCE > 4) GENERATE
+					rcnt2 : lpm_counter WITH (LPM_WIDTH=RAM_WIDTHAD-2, LPM_DIRECTION="UP", USE_NEW_VERSION="FALSE");	-- upper bits
+				END GENERATE;
+			END GENERATE;
+		END GENERATE;
+	ELSE GENERATE
+		auto_generated : @CBXI_PARAMETER WITH (CBXI_PARAMETER = "NOTHING");
+	END GENERATE;
+BEGIN
+	IF CBXI_PARAMETER == "NOTHING" GENERATE
+		-- Cause: User set TAP_DISTANCE value too low, must be 3 or more
+		-- Action: Set tap distance to 3 or more.
+		ASSERT (TAP_DISTANCE > 2)
+			REPORT "Value of TAP_DISTANCE parameter must be greater than or equal to 3"
+			SEVERITY ERROR
+			HELP_ID ALTSHIFT_TAPS_TAP_DISTANCE;
+
+		-- Connect the address counters
+		IF (TAP_DISTANCE > 1) GENERATE
+			wrcnt[] = wcnt.q[];	-- write address counter
+			wcnt.clock = clock;
+			wcnt.clk_en = clken;
+
+			IF (TAP_DISTANCE > 2) GENERATE
+				-- construct a 2-bit counter that powers-up to 2
+				rcnt1.cin = rcnt0.cout;
+				rdcnt[0] = rcnt0.q[0];
+				rdcnt[1] = !rcnt1.q[0];
+				(rcnt0, rcnt1).clock = clock;
+				(rcnt0, rcnt1).clk_en = clken;
+			
+				IF (TAP_DISTANCE > 4) GENERATE
+					rcnt2.cin = rcnt1.cout;
+					rdcnt[RAM_WIDTHAD-1..2] = rcnt2.q[];	-- upper bits
+					rcnt2.clock = clock;
+					rcnt2.clk_en = clken;
+				END GENERATE;
+			
+				-- If the TAP distance is not a power of 2, need to wrap
+				-- when the write counter wraps
+				IF (TAP_DISTANCE != 2^RAM_WIDTHAD) GENERATE
+					-- connect modulus comparator
+					rcnt_max.dataa[] = rcnt_const.result[];
+					rcnt_max.datab[] = rdcnt[];
+					
+					-- Do an sload of 0 to synchronously clear the counter
+					-- Can't use sclr & sset since that would not fit in some devices
+					(rcnt0, rcnt1).sload = rcnt_max.aeb;
+					rcnt0.data[] = GND;
+					rcnt1.data[] = VCC;
+					IF (TAP_DISTANCE > 4) GENERATE
+						rcnt2.sload = rcnt_max.aeb;
+						rcnt2.data[] = GND;
+					END GENERATE;
+				END GENERATE;
+			ELSE GENERATE
+				-- exactly 2 words of memory, so only need 1 counter.
+				rdcnt[] = wrcnt[];
+			END GENERATE;
+			
+			-- Connect the memory address inputs
+			shiftram.wraddress[] = wrcnt[];
+			shiftram.rdaddress[] = rdcnt[];
+		END GENERATE;
+	
+		-- Connect clocks, we
+		shiftram.inclock = clock;
+		shiftram.inclocken = clken;
+		shiftram.outclock = clock;
+		shiftram.outclocken = clken;
+		shiftram.wren = VCC;
+		
+		-- Connect new data to RAM input data
+		shiftram.data[WIDTH-1..0] = shiftin[WIDTH-1..0];
+
+		-- Connect aclr port
+		shiftram.aclr = aclr;
+		
+		-- Connect feedback data
+		IF (NUMBER_OF_TAPS > 1) GENERATE
+			shiftram.data[RAM_WIDTH-1..WIDTH] = shiftram.q[RAM_WIDTH-WIDTH-1..0];
+		END GENERATE;
+		
+		-- Connect output
+		taps[] = shiftram.q[];
+		shiftout[WIDTH-1..0] = taps[RAM_WIDTH-1..RAM_WIDTH-WIDTH];
+	ELSE GENERATE
+		IF USED(shiftin) GENERATE
+			auto_generated.shiftin[] = shiftin[];
+		END GENERATE;
+		IF USED(clock) GENERATE
+			auto_generated.clock = clock;
+		END GENERATE;
+		IF USED(clken) GENERATE
+			auto_generated.clken = clken;
+		END GENERATE;
+		IF USED(shiftout) GENERATE
+			shiftout[] = auto_generated.shiftout[];
+		END GENERATE;
+		IF USED(taps) GENERATE
+			taps[] = auto_generated.taps[];
+		END GENERATE;
+		IF USED(aclr) GENERATE
+			auto_generated.aclr = aclr;
+		END GENERATE;
+	END GENERATE;
+	IF !USED(shiftout) GENERATE
+		shiftout[] = GND;
+	END GENERATE;
+	IF !USED(taps) GENERATE
+		taps[] = GND;
+	END GENERATE;
+END;
+

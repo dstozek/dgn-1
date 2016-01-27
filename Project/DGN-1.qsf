@@ -1,0 +1,291 @@
+# -------------------------------------------------------------------------- #
+#
+# Copyright (C) 1991-2010 Altera Corporation
+# Your use of Altera Corporation's design tools, logic functions 
+# and other software and tools, and its AMPP partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Altera Program License 
+# Subscription Agreement, Altera MegaCore Function License 
+# Agreement, or other applicable license agreement, including, 
+# without limitation, that your use is for the sole purpose of 
+# programming logic devices manufactured by Altera and sold by 
+# Altera or its authorized distributors.  Please refer to the 
+# applicable agreement for further details.
+#
+# -------------------------------------------------------------------------- #
+#
+# Quartus II
+# Version 9.1 Build 350 03/24/2010 Service Pack 2 SJ Web Edition
+# Date created = 22:24:12  May 06, 2010
+#
+# -------------------------------------------------------------------------- #
+#
+# Notes:
+#
+# 1) The default values for assignments are stored in the file:
+#		DGN-1_assignment_defaults.qdf
+#    If this file doesn't exist, see file:
+#		assignment_defaults.qdf
+#
+# 2) Altera recommends that you do not modify this file. This
+#    file is updated automatically by the Quartus II software
+#    and any changes you make may be lost or overwritten.
+#
+# -------------------------------------------------------------------------- #
+
+
+set_global_assignment -name FAMILY "Cyclone II"
+set_global_assignment -name DEVICE EP2C35F672C7
+set_global_assignment -name TOP_LEVEL_ENTITY "DGN-1"
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION "9.1 SP2"
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "22:24:12  MAY 06, 2010"
+set_global_assignment -name LAST_QUARTUS_VERSION "10.0 SP1"
+set_global_assignment -name USE_GENERATED_PHYSICAL_CONSTRAINTS OFF -section_id eda_blast_fpga
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
+set_location_assignment PIN_E10 -to VGA_R_from_the_vga[9]
+set_location_assignment PIN_F11 -to VGA_R_from_the_vga[8]
+set_location_assignment PIN_H12 -to VGA_R_from_the_vga[7]
+set_location_assignment PIN_H11 -to VGA_R_from_the_vga[6]
+set_location_assignment PIN_A8 -to VGA_R_from_the_vga[5]
+set_location_assignment PIN_C9 -to VGA_R_from_the_vga[4]
+set_location_assignment PIN_D9 -to VGA_R_from_the_vga[3]
+set_location_assignment PIN_G10 -to VGA_R_from_the_vga[2]
+set_location_assignment PIN_F10 -to VGA_R_from_the_vga[1]
+set_location_assignment PIN_C8 -to VGA_R_from_the_vga[0]
+set_location_assignment PIN_B9 -to VGA_G_from_the_vga[0]
+set_location_assignment PIN_A9 -to VGA_G_from_the_vga[1]
+set_location_assignment PIN_C10 -to VGA_G_from_the_vga[2]
+set_location_assignment PIN_D10 -to VGA_G_from_the_vga[3]
+set_location_assignment PIN_B10 -to VGA_G_from_the_vga[4]
+set_location_assignment PIN_A10 -to VGA_G_from_the_vga[5]
+set_location_assignment PIN_G11 -to VGA_G_from_the_vga[6]
+set_location_assignment PIN_D11 -to VGA_G_from_the_vga[7]
+set_location_assignment PIN_E12 -to VGA_G_from_the_vga[8]
+set_location_assignment PIN_D12 -to VGA_G_from_the_vga[9]
+set_location_assignment PIN_J13 -to VGA_B_from_the_vga[0]
+set_location_assignment PIN_J14 -to VGA_B_from_the_vga[1]
+set_location_assignment PIN_F12 -to VGA_B_from_the_vga[2]
+set_location_assignment PIN_G12 -to VGA_B_from_the_vga[3]
+set_location_assignment PIN_J10 -to VGA_B_from_the_vga[4]
+set_location_assignment PIN_J11 -to VGA_B_from_the_vga[5]
+set_location_assignment PIN_C11 -to VGA_B_from_the_vga[6]
+set_location_assignment PIN_B11 -to VGA_B_from_the_vga[7]
+set_location_assignment PIN_C12 -to VGA_B_from_the_vga[8]
+set_location_assignment PIN_B12 -to VGA_B_from_the_vga[9]
+set_location_assignment PIN_A7 -to VGA_HS_from_the_vga
+set_location_assignment PIN_B7 -to VGA_SYNC_from_the_vga
+set_location_assignment PIN_D8 -to VGA_VS_from_the_vga
+set_location_assignment PIN_D6 -to VGA_BLANK_from_the_vga
+set_location_assignment PIN_AE4 -to SRAM_ADDR_from_the_sram[0]
+set_location_assignment PIN_AF4 -to SRAM_ADDR_from_the_sram[1]
+set_location_assignment PIN_AC5 -to SRAM_ADDR_from_the_sram[2]
+set_location_assignment PIN_AC6 -to SRAM_ADDR_from_the_sram[3]
+set_location_assignment PIN_AD4 -to SRAM_ADDR_from_the_sram[4]
+set_location_assignment PIN_AD5 -to SRAM_ADDR_from_the_sram[5]
+set_location_assignment PIN_AE5 -to SRAM_ADDR_from_the_sram[6]
+set_location_assignment PIN_AF5 -to SRAM_ADDR_from_the_sram[7]
+set_location_assignment PIN_AD6 -to SRAM_ADDR_from_the_sram[8]
+set_location_assignment PIN_AD7 -to SRAM_ADDR_from_the_sram[9]
+set_location_assignment PIN_V10 -to SRAM_ADDR_from_the_sram[10]
+set_location_assignment PIN_V9 -to SRAM_ADDR_from_the_sram[11]
+set_location_assignment PIN_AC7 -to SRAM_ADDR_from_the_sram[12]
+set_location_assignment PIN_W8 -to SRAM_ADDR_from_the_sram[13]
+set_location_assignment PIN_W10 -to SRAM_ADDR_from_the_sram[14]
+set_location_assignment PIN_Y10 -to SRAM_ADDR_from_the_sram[15]
+set_location_assignment PIN_AB8 -to SRAM_ADDR_from_the_sram[16]
+set_location_assignment PIN_AC8 -to SRAM_ADDR_from_the_sram[17]
+set_location_assignment PIN_AD8 -to SRAM_DQ_to_and_from_the_sram[0]
+set_location_assignment PIN_AE6 -to SRAM_DQ_to_and_from_the_sram[1]
+set_location_assignment PIN_AF6 -to SRAM_DQ_to_and_from_the_sram[2]
+set_location_assignment PIN_AA9 -to SRAM_DQ_to_and_from_the_sram[3]
+set_location_assignment PIN_AA10 -to SRAM_DQ_to_and_from_the_sram[4]
+set_location_assignment PIN_AB10 -to SRAM_DQ_to_and_from_the_sram[5]
+set_location_assignment PIN_AA11 -to SRAM_DQ_to_and_from_the_sram[6]
+set_location_assignment PIN_Y11 -to SRAM_DQ_to_and_from_the_sram[7]
+set_location_assignment PIN_AE7 -to SRAM_DQ_to_and_from_the_sram[8]
+set_location_assignment PIN_AF7 -to SRAM_DQ_to_and_from_the_sram[9]
+set_location_assignment PIN_AE8 -to SRAM_DQ_to_and_from_the_sram[10]
+set_location_assignment PIN_AF8 -to SRAM_DQ_to_and_from_the_sram[11]
+set_location_assignment PIN_W11 -to SRAM_DQ_to_and_from_the_sram[12]
+set_location_assignment PIN_W12 -to SRAM_DQ_to_and_from_the_sram[13]
+set_location_assignment PIN_AC9 -to SRAM_DQ_to_and_from_the_sram[14]
+set_location_assignment PIN_AC10 -to SRAM_DQ_to_and_from_the_sram[15]
+set_location_assignment PIN_AE9 -to SRAM_LB_N_from_the_sram
+set_location_assignment PIN_AD10 -to SRAM_OE_N_from_the_sram
+set_location_assignment PIN_AF9 -to SRAM_UB_N_from_the_sram
+set_location_assignment PIN_AE10 -to SRAM_WE_N_from_the_sram
+set_location_assignment PIN_N2 -to clk_0
+set_location_assignment PIN_D13 -to ext_clk_27_to_the_external_clocks
+set_location_assignment PIN_V2 -to reset_n
+set_location_assignment PIN_AC11 -to SRAM_CE_N_from_the_sram
+set_global_assignment -name POST_FLOW_SCRIPT_FILE "quartus_sh:auto_verify_ddr_timing.tcl"
+set_location_assignment PIN_T6 -to zs_addr_from_the_sdram[0]
+set_location_assignment PIN_V4 -to zs_addr_from_the_sdram[1]
+set_location_assignment PIN_V3 -to zs_addr_from_the_sdram[2]
+set_location_assignment PIN_W2 -to zs_addr_from_the_sdram[3]
+set_location_assignment PIN_W1 -to zs_addr_from_the_sdram[4]
+set_location_assignment PIN_U6 -to zs_addr_from_the_sdram[5]
+set_location_assignment PIN_U7 -to zs_addr_from_the_sdram[6]
+set_location_assignment PIN_U5 -to zs_addr_from_the_sdram[7]
+set_location_assignment PIN_W4 -to zs_addr_from_the_sdram[8]
+set_location_assignment PIN_W3 -to zs_addr_from_the_sdram[9]
+set_location_assignment PIN_Y1 -to zs_addr_from_the_sdram[10]
+set_location_assignment PIN_V5 -to zs_addr_from_the_sdram[11]
+set_location_assignment PIN_V6 -to zs_dq_to_and_from_the_sdram[0]
+set_location_assignment PIN_AA2 -to zs_dq_to_and_from_the_sdram[1]
+set_location_assignment PIN_AA1 -to zs_dq_to_and_from_the_sdram[2]
+set_location_assignment PIN_Y3 -to zs_dq_to_and_from_the_sdram[3]
+set_location_assignment PIN_Y4 -to zs_dq_to_and_from_the_sdram[4]
+set_location_assignment PIN_R8 -to zs_dq_to_and_from_the_sdram[5]
+set_location_assignment PIN_T8 -to zs_dq_to_and_from_the_sdram[6]
+set_location_assignment PIN_V7 -to zs_dq_to_and_from_the_sdram[7]
+set_location_assignment PIN_W6 -to zs_dq_to_and_from_the_sdram[8]
+set_location_assignment PIN_AB2 -to zs_dq_to_and_from_the_sdram[9]
+set_location_assignment PIN_AB1 -to zs_dq_to_and_from_the_sdram[10]
+set_location_assignment PIN_AA4 -to zs_dq_to_and_from_the_sdram[11]
+set_location_assignment PIN_AA3 -to zs_dq_to_and_from_the_sdram[12]
+set_location_assignment PIN_AC2 -to zs_dq_to_and_from_the_sdram[13]
+set_location_assignment PIN_AC1 -to zs_dq_to_and_from_the_sdram[14]
+set_location_assignment PIN_AA5 -to zs_dq_to_and_from_the_sdram[15]
+set_location_assignment PIN_AE2 -to zs_ba_from_the_sdram[0]
+set_location_assignment PIN_AE3 -to zs_ba_from_the_sdram[1]
+set_location_assignment PIN_AB3 -to zs_cas_n_from_the_sdram
+set_location_assignment PIN_AA6 -to zs_cke_from_the_sdram
+set_location_assignment PIN_AC3 -to zs_cs_n_from_the_sdram
+set_location_assignment PIN_AB4 -to zs_ras_n_from_the_sdram
+set_location_assignment PIN_AD3 -to zs_we_n_from_the_sdram
+set_location_assignment PIN_Y5 -to zs_dqm_from_the_sdram[1]
+set_location_assignment PIN_AD2 -to zs_dqm_from_the_sdram[0]
+set_location_assignment PIN_AC18 -to address_to_the_cfi_flash[0]
+set_location_assignment PIN_AB18 -to address_to_the_cfi_flash[1]
+set_location_assignment PIN_AE19 -to address_to_the_cfi_flash[2]
+set_location_assignment PIN_AF19 -to address_to_the_cfi_flash[3]
+set_location_assignment PIN_AE18 -to address_to_the_cfi_flash[4]
+set_location_assignment PIN_AF18 -to address_to_the_cfi_flash[5]
+set_location_assignment PIN_Y16 -to address_to_the_cfi_flash[6]
+set_location_assignment PIN_AA16 -to address_to_the_cfi_flash[7]
+set_location_assignment PIN_AD17 -to address_to_the_cfi_flash[8]
+set_location_assignment PIN_AC17 -to address_to_the_cfi_flash[9]
+set_location_assignment PIN_AE17 -to address_to_the_cfi_flash[10]
+set_location_assignment PIN_AF17 -to address_to_the_cfi_flash[11]
+set_location_assignment PIN_W16 -to address_to_the_cfi_flash[12]
+set_location_assignment PIN_W15 -to address_to_the_cfi_flash[13]
+set_location_assignment PIN_AC16 -to address_to_the_cfi_flash[14]
+set_location_assignment PIN_AD16 -to address_to_the_cfi_flash[15]
+set_location_assignment PIN_AE16 -to address_to_the_cfi_flash[16]
+set_location_assignment PIN_AC15 -to address_to_the_cfi_flash[17]
+set_location_assignment PIN_AB15 -to address_to_the_cfi_flash[18]
+set_location_assignment PIN_AA15 -to address_to_the_cfi_flash[19]
+set_location_assignment PIN_Y15 -to address_to_the_cfi_flash[20]
+set_location_assignment PIN_Y14 -to address_to_the_cfi_flash[21]
+set_location_assignment PIN_AD19 -to data_to_and_from_the_cfi_flash[0]
+set_location_assignment PIN_AC19 -to data_to_and_from_the_cfi_flash[1]
+set_location_assignment PIN_AF20 -to data_to_and_from_the_cfi_flash[2]
+set_location_assignment PIN_AE20 -to data_to_and_from_the_cfi_flash[3]
+set_location_assignment PIN_AB20 -to data_to_and_from_the_cfi_flash[4]
+set_location_assignment PIN_AC20 -to data_to_and_from_the_cfi_flash[5]
+set_location_assignment PIN_AF21 -to data_to_and_from_the_cfi_flash[6]
+set_location_assignment PIN_AE21 -to data_to_and_from_the_cfi_flash[7]
+set_location_assignment PIN_AA17 -to write_n_to_the_cfi_flash
+set_location_assignment PIN_W17 -to read_n_to_the_cfi_flash
+set_location_assignment PIN_V17 -to select_n_to_the_cfi_flash
+set_location_assignment PIN_AA18 -to FL_RST_N_from_the_Altera_UP_Flash_Memory_IP_Core_Avalon_Interface_0
+set_location_assignment PIN_D26 -to PS2_CLK_to_and_from_the_ps2
+set_location_assignment PIN_C24 -to PS2_DAT_to_and_from_the_ps2
+set_location_assignment PIN_A5 -to AUD_XCK_from_the_external_clocks
+set_location_assignment PIN_A6 -to I2C_SCLK_from_the_audio_and_video_config_0
+set_location_assignment PIN_B6 -to I2C_SDAT_to_and_from_the_audio_and_video_config_0
+set_location_assignment PIN_B5 -to adcin
+set_location_assignment PIN_B4 -to bclk
+set_location_assignment PIN_C6 -to daclrclk
+set_location_assignment PIN_A4 -to dacout
+set_global_assignment -name ENABLE_SIGNALTAP ON
+set_global_assignment -name USE_SIGNALTAP_FILE stp1.stp
+set_location_assignment PIN_B8 -to VGA_CLK
+set_location_assignment PIN_AA7 -to DRAM_CLK
+set_location_assignment PIN_N25 -to audio_enable
+set_location_assignment PIN_AE23 -to output[0]
+set_location_assignment PIN_AF23 -to output[1]
+set_location_assignment PIN_AB21 -to output[2]
+set_location_assignment PIN_AC22 -to output[3]
+set_location_assignment PIN_AD22 -to output[4]
+set_location_assignment PIN_AD23 -to output[5]
+set_location_assignment PIN_AD21 -to output[6]
+set_location_assignment PIN_AC21 -to output[7]
+set_location_assignment PIN_AA14 -to output[8]
+set_location_assignment PIN_Y13 -to output[9]
+set_location_assignment PIN_AA13 -to output[10]
+set_location_assignment PIN_AC14 -to output[11]
+set_location_assignment PIN_AD15 -to output[12]
+set_location_assignment PIN_AE15 -to output[13]
+set_location_assignment PIN_AF13 -to output[14]
+set_location_assignment PIN_AE13 -to overThreshold
+set_location_assignment PIN_V1 -to mono
+set_location_assignment PIN_C5 -to adc_lrclk
+set_location_assignment PIN_N26 -to master_bypass
+set_location_assignment PIN_C13 -to bitcrusher_flavor
+set_location_assignment PIN_B13 -to bitcrusher_bypass_filter
+set_instance_assignment -name GLOBAL_SIGNAL "GLOBAL CLOCK" -to daclrclk
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name LL_ROOT_REGION ON -section_id "Root Region"
+set_global_assignment -name LL_MEMBER_STATE LOCKED -section_id "Root Region"
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name SEARCH_PATH altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_alpha_blending/ -tag from_archive
+set_global_assignment -name SEARCH_PATH altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_character_buffer/ -tag from_archive
+set_global_assignment -name SEARCH_PATH altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_pixel_buffer/ -tag from_archive
+set_global_assignment -name SEARCH_PATH altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_vga/ -tag from_archive
+set_global_assignment -name SEARCH_PATH altera/91sp2/ip/University_Program/Audio_Video/altera_up_avalon_audio_and_video_config/ -tag from_archive
+set_global_assignment -name SEARCH_PATH altera/91sp2/ip/University_Program/Input_Output/altera_up_avalon_ps2/ -tag from_archive
+set_global_assignment -name SEARCH_PATH altera/91sp2/ip/University_Program/Memory/altera_up_avalon_sram/ -tag from_archive
+set_global_assignment -name SEARCH_PATH altera/91sp2/ip/University_Program/Memory/altera_up_flash_memory/ -tag from_archive
+set_global_assignment -name SEARCH_PATH altera/91sp2/ip/University_Program/Memory/altera_up_flash_memory/hdl/ -tag from_archive
+set_global_assignment -name SEARCH_PATH altera/91sp2/quartus/libraries/vhdl/ieee/ -tag from_archive
+set_global_assignment -name SEARCH_PATH analysis/ -tag from_archive
+set_global_assignment -name SEARCH_PATH audio/ -tag from_archive
+set_global_assignment -name SEARCH_PATH "ddr_sdram_controller-library/" -tag from_archive
+set_global_assignment -name SEARCH_PATH megafunctions/ -tag from_archive
+set_global_assignment -name SEARCH_PATH testbench/ -tag from_archive
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_global_assignment -name MISC_FILE "DGN-1.dpf"
+set_global_assignment -name BDF_FILE "DGN-1.bdf"
+set_global_assignment -name VERILOG_FILE vga.v
+set_global_assignment -name VHDL_FILE analyzer_input.vhd
+set_global_assignment -name VHDL_FILE audio/octaver.vhd
+set_global_assignment -name VHDL_FILE analysis/runningAverage.vhd
+set_global_assignment -name VHDL_FILE analysis/thresholder.vhd
+set_global_assignment -name VHDL_FILE audio/amp.vhd
+set_global_assignment -name BDF_FILE audio/audio_two.bdf
+set_global_assignment -name VHDL_FILE audio/audiodeserializer.vhd
+set_global_assignment -name VHDL_FILE audio/audioserializer.vhd
+set_global_assignment -name VHDL_FILE audio/bypass.vhd
+set_global_assignment -name VHDL_FILE audio/delaymixer.vhd
+set_global_assignment -name VHDL_FILE audio/distortion_t2.vhd
+set_global_assignment -name VHDL_FILE audio/lowpass_filter_f1.vhd
+set_global_assignment -name VHDL_FILE audio/membuffer.vhd
+set_global_assignment -name VHDL_FILE audio/pipeline_buffer.vhd
+set_global_assignment -name VHDL_FILE audio/tonemixer.vhd
+set_global_assignment -name QIP_FILE VGAProc.qip
+set_global_assignment -name QIP_FILE ddr_sdram_component_classic_0.qip
+set_global_assignment -name SIGNALTAP_FILE stp1.stp
+set_global_assignment -name VERILOG_FILE aud_xck_generator.v
+set_global_assignment -name VHDL_FILE audio/lp_filter_pipelined.vhd
+set_global_assignment -name VHDL_FILE audio/ampThreshold.vhd
+set_global_assignment -name VHDL_FILE audio/compressor.vhd
+set_global_assignment -name VHDL_FILE audio/mono_selector.vhd
+set_global_assignment -name VHDL_FILE audio/bitcrusher.vhd
+set_global_assignment -name VHDL_FILE audio/tone_filter_a.vhd
+set_global_assignment -name BDF_FILE audio/distortion_block.bdf
+set_global_assignment -name VHDL_FILE audio/panner.vhd
+set_global_assignment -name VHDL_FILE octaver_filter_1.vhd
+set_global_assignment -name BDF_FILE audio/octaver_effect.bdf
+set_global_assignment -name VHDL_FILE audio/bitcrusher2.vhd
+set_global_assignment -name VHDL_FILE PIODeserializer.vhd
+set_global_assignment -name VHDL_FILE audio/bitcrusherAdaptative.vhd
+set_global_assignment -name BDF_FILE audio/compressor_block.bdf
+set_global_assignment -name VHDL_FILE audio/serial_mixer.vhd
+set_global_assignment -name BDF_FILE audio/bitcrusher_block.bdf

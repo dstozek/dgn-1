@@ -1,0 +1,486 @@
+Restore Archived Project report for DGN-1
+Sat Jul 10 13:43:20 2010
+Quartus II Version 9.1 Build 350 03/24/2010 Service Pack 2 SJ Web Edition
+
+
+---------------------
+; Table of Contents ;
+---------------------
+  1. Legal Notice
+  2. Restore Archived Project Summary
+  3. Restore Archived Project Messages
+  4. Files Restored
+  5. Files Not Restored
+
+
+
+----------------
+; Legal Notice ;
+----------------
+Copyright (C) 1991-2010 Altera Corporation
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, Altera MegaCore Function License 
+Agreement, or other applicable license agreement, including, 
+without limitation, that your use is for the sole purpose of 
+programming logic devices manufactured by Altera and sold by 
+Altera or its authorized distributors.  Please refer to the 
+applicable agreement for further details.
+
+
+
++-------------------------------------------------------------------------+
+; Restore Archived Project Summary                                        ;
++---------------------------------+---------------------------------------+
+; Restore Archived Project Status ; Successful - Sat Jul 10 13:43:20 2010 ;
+; Revision Name                   ; DGN-1                                 ;
+; Top-level Entity Name           ;                                       ;
+; Family                          ; Cyclone II                            ;
++---------------------------------+---------------------------------------+
+
+
++-----------------------------------+
+; Restore Archived Project Messages ;
++-----------------------------------+
+Info: Successfully restored 'C:/Data/Proyektz/Tidied/IFE/Sem6/DGN1-Package-2/Auxiliary/Archived/DGN-1.qar' into the 'C:/Data/Proyektz/Tidied/IFE/Sem6/DGN1-Package-2/Project/' directory
+Info: Generated report 'DGN-1.restore.rpt'
+Info: Evaluation of Tcl script c:/altera/91sp2/quartus/common/tcl/apps/qpm/qar.tcl was successful
+Info: Quartus II Shell was successful. 0 errors, 32 warnings
+    Info: Peak virtual memory: 136 megabytes
+    Info: Processing ended: Sat Jul 10 13:43:20 2010
+    Info: Elapsed time: 00:00:01
+    Info: Total CPU time (on all processors): 00:00:01
+
+
++---------------------------------------------------------------------------------------------------------------------------------------+
+; Files Restored                                                                                                                        ;
++---------------------------------------------------------------------------------------------------------------------------------------+
+; File Name                                                                                                                             ;
++---------------------------------------------------------------------------------------------------------------------------------------+
+; Altera_UP_128_Character_Rom.v                                                                                                         ;
+; Altera_UP_Flash_Memory_IP_Core_Avalon_Interface_0.vhd                                                                                 ;
+; Altera_UP_I2C.v                                                                                                                       ;
+; Altera_UP_I2C_AV_Auto_Initialize.v                                                                                                    ;
+; Altera_UP_PS2.v                                                                                                                       ;
+; Altera_UP_PS2_Command_Out.v                                                                                                           ;
+; Altera_UP_PS2_Data_In.v                                                                                                               ;
+; Altera_UP_Slow_Clock_Generator.v                                                                                                      ;
+; Altera_UP_VGA_DAC.v                                                                                                                   ;
+; Char_Mode_Rom_128.mif                                                                                                                 ;
+; DGN-1.bdf                                                                                                                             ;
+; DGN-1.dpf                                                                                                                             ;
+; DGN-1.jdi                                                                                                                             ;
+; DGN-1.qpf                                                                                                                             ;
+; DGN-1.qsf                                                                                                                             ;
+; DGN-1_assignment_defaults.qdf                                                                                                         ;
+; PIODeserializer.vhd                                                                                                                   ;
+; VGAProc.qip                                                                                                                           ;
+; VGAProc.sopc                                                                                                                          ;
+; VGAProc.vhd                                                                                                                           ;
+; add_constraints_for_ddr_sdram_component_classic_0.tcl                                                                                 ;
+; alpha_blending.v                                                                                                                      ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_alpha_blending/Altera_UP_Avalon_Alpha_Blending_hw.tcl       ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_alpha_blending/UP_IP_Generator.tcl                          ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_character_buffer/Altera_UP_Avalon_Character_Buffer_hw.tcl   ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_character_buffer/Altera_UP_Avalon_Character_Buffer_sw.tcl   ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_character_buffer/UP_IP_Generator.tcl                        ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_pixel_buffer/Altera_UP_Avalon_Pixel_Buffer_hw.tcl           ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_pixel_buffer/Altera_UP_Avalon_Pixel_Buffer_sw.tcl           ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_pixel_buffer/UP_IP_Generator.tcl                            ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_vga/Altera_UP_Avalon_VGA_hw.tcl                             ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_vga/UP_IP_Generator.tcl                                     ;
+; altera/91sp2/ip/University_Program/Audio_Video/altera_up_avalon_audio_and_video_config/Altera_UP_Avalon_Audio_and_Video_Config_hw.tcl ;
+; altera/91sp2/ip/University_Program/Audio_Video/altera_up_avalon_audio_and_video_config/Altera_UP_Avalon_Audio_and_Video_Config_sw.tcl ;
+; altera/91sp2/ip/University_Program/Audio_Video/altera_up_avalon_audio_and_video_config/UP_IP_Generator.tcl                            ;
+; altera/91sp2/ip/University_Program/Input_Output/altera_up_avalon_ps2/Altera_UP_Avalon_PS2_hw.tcl                                      ;
+; altera/91sp2/ip/University_Program/Input_Output/altera_up_avalon_ps2/Altera_UP_Avalon_PS2_sw.tcl                                      ;
+; altera/91sp2/ip/University_Program/Input_Output/altera_up_avalon_ps2/UP_IP_Generator.tcl                                              ;
+; altera/91sp2/ip/University_Program/Memory/altera_up_avalon_sram/Altera_UP_Avalon_SRAM_hw.tcl                                          ;
+; altera/91sp2/ip/University_Program/Memory/altera_up_avalon_sram/UP_IP_Generator.tcl                                                   ;
+; altera/91sp2/ip/University_Program/Memory/altera_up_flash_memory/Altera_UP_Flash_Memory_IP_Core_Avalon_Interface_hw.tcl               ;
+; analysis/runningAverage.vhd                                                                                                           ;
+; analysis/thresholder.vhd                                                                                                              ;
+; analyzer_input.vhd                                                                                                                    ;
+; analyzer_input_hw.tcl                                                                                                                 ;
+; analyzer_input_left.vhd                                                                                                               ;
+; analyzer_input_right.vhd                                                                                                              ;
+; aud_xck_generator.v                                                                                                                   ;
+; audio/amp.vhd                                                                                                                         ;
+; audio/ampThreshold.vhd                                                                                                                ;
+; audio/audio_two.bdf                                                                                                                   ;
+; audio/audiodeserializer.vhd                                                                                                           ;
+; audio/audioserializer.vhd                                                                                                             ;
+; audio/bitcrusher.vhd                                                                                                                  ;
+; audio/bitcrusher2.vhd                                                                                                                 ;
+; audio/bitcrusherAdaptative.vhd                                                                                                        ;
+; audio/bitcrusher_block.bdf                                                                                                            ;
+; audio/bypass.vhd                                                                                                                      ;
+; audio/compressor.vhd                                                                                                                  ;
+; audio/compressor_block.bdf                                                                                                            ;
+; audio/delaymixer.vhd                                                                                                                  ;
+; audio/distortion_block.bdf                                                                                                            ;
+; audio/distortion_t2.vhd                                                                                                               ;
+; audio/lowpass_filter_f1.vhd                                                                                                           ;
+; audio/lp_filter_pipelined.vhd                                                                                                         ;
+; audio/membuffer.vhd                                                                                                                   ;
+; audio/membuffer_hw.tcl                                                                                                                ;
+; audio/mono_selector.vhd                                                                                                               ;
+; audio/octaver.vhd                                                                                                                     ;
+; audio/octaver_effect.bdf                                                                                                              ;
+; audio/panner.vhd                                                                                                                      ;
+; audio/pipeline_buffer.vhd                                                                                                             ;
+; audio/serial_mixer.vhd                                                                                                                ;
+; audio/tone_filter_a.vhd                                                                                                               ;
+; audio/tonemixer.vhd                                                                                                                   ;
+; audio_and_video_config_0.v                                                                                                            ;
+; auto_add_ddr_constraints.tcl                                                                                                          ;
+; auto_verify_ddr_timing.tcl                                                                                                            ;
+; character_buffer.v                                                                                                                    ;
+; constraints_out.txt                                                                                                                   ;
+; cpu.ocp                                                                                                                               ;
+; cpu.sdc                                                                                                                               ;
+; cpu.vhd                                                                                                                               ;
+; cpu_bht_ram.mif                                                                                                                       ;
+; cpu_fpoint.vhd                                                                                                                        ;
+; cpu_ic_tag_ram.mif                                                                                                                    ;
+; cpu_jtag_debug_module_sysclk.vhd                                                                                                      ;
+; cpu_jtag_debug_module_tck.vhd                                                                                                         ;
+; cpu_jtag_debug_module_wrapper.vhd                                                                                                     ;
+; cpu_mult_cell.vhd                                                                                                                     ;
+; cpu_oci_test_bench.vhd                                                                                                                ;
+; cpu_ociram_default_contents.mif                                                                                                       ;
+; cpu_rf_ram_a.mif                                                                                                                      ;
+; cpu_rf_ram_b.mif                                                                                                                      ;
+; cpu_test_bench.vhd                                                                                                                    ;
+; DGN-1.cbx.xml                                                                                                                         ;
+; db/a_dpfifo_8t21.tdf                                                                                                                  ;
+; db/a_dpfifo_gj31.tdf                                                                                                                  ;
+; db/a_dpfifo_qn31.tdf                                                                                                                  ;
+; db/a_fefifo_7cf.tdf                                                                                                                   ;
+; db/add_sub_01h.tdf                                                                                                                    ;
+; db/add_sub_08g.tdf                                                                                                                    ;
+; db/add_sub_12h.tdf                                                                                                                    ;
+; db/add_sub_1gh.tdf                                                                                                                    ;
+; db/add_sub_27g.tdf                                                                                                                    ;
+; db/add_sub_4ch.tdf                                                                                                                    ;
+; db/add_sub_55i.tdf                                                                                                                    ;
+; db/add_sub_69i.tdf                                                                                                                    ;
+; db/add_sub_6jg.tdf                                                                                                                    ;
+; db/add_sub_75h.tdf                                                                                                                    ;
+; db/add_sub_7jg.tdf                                                                                                                    ;
+; db/add_sub_7ng.tdf                                                                                                                    ;
+; db/add_sub_8kg.tdf                                                                                                                    ;
+; db/add_sub_8ng.tdf                                                                                                                    ;
+; db/add_sub_9kg.tdf                                                                                                                    ;
+; db/add_sub_9ng.tdf                                                                                                                    ;
+; db/add_sub_aog.tdf                                                                                                                    ;
+; db/add_sub_bsi.tdf                                                                                                                    ;
+; db/add_sub_cmg.tdf                                                                                                                    ;
+; db/add_sub_cti.tdf                                                                                                                    ;
+; db/add_sub_egg.tdf                                                                                                                    ;
+; db/add_sub_gvd.tdf                                                                                                                    ;
+; db/add_sub_hvg.tdf                                                                                                                    ;
+; db/add_sub_kgi.tdf                                                                                                                    ;
+; db/add_sub_m3h.tdf                                                                                                                    ;
+; db/add_sub_pah.tdf                                                                                                                    ;
+; db/add_sub_pfh.tdf                                                                                                                    ;
+; db/add_sub_qsk.tdf                                                                                                                    ;
+; db/add_sub_sfh.tdf                                                                                                                    ;
+; db/add_sub_tfh.tdf                                                                                                                    ;
+; db/add_sub_v4h.tdf                                                                                                                    ;
+; db/add_sub_vdk.tdf                                                                                                                    ;
+; db/add_sub_voh.tdf                                                                                                                    ;
+; db/altsyncram_4272.tdf                                                                                                                ;
+; db/altsyncram_4ua1.tdf                                                                                                                ;
+; db/altsyncram_6ta1.tdf                                                                                                                ;
+; db/altsyncram_9tl1.tdf                                                                                                                ;
+; db/altsyncram_ata1.tdf                                                                                                                ;
+; db/altsyncram_bta1.tdf                                                                                                                ;
+; db/altsyncram_e502.tdf                                                                                                                ;
+; db/altsyncram_eqa1.tdf                                                                                                                ;
+; db/altsyncram_eta1.tdf                                                                                                                ;
+; db/altsyncram_fta1.tdf                                                                                                                ;
+; db/altsyncram_ita1.tdf                                                                                                                ;
+; db/altsyncram_kqa1.tdf                                                                                                                ;
+; db/altsyncram_kta1.tdf                                                                                                                ;
+; db/altsyncram_lqa1.tdf                                                                                                                ;
+; db/altsyncram_mbj1.tdf                                                                                                                ;
+; db/altsyncram_ota1.tdf                                                                                                                ;
+; db/altsyncram_p2f1.tdf                                                                                                                ;
+; db/altsyncram_pkf1.tdf                                                                                                                ;
+; db/altsyncram_pta1.tdf                                                                                                                ;
+; db/altsyncram_q2f1.tdf                                                                                                                ;
+; db/altsyncram_qed1.tdf                                                                                                                ;
+; db/altsyncram_r461.tdf                                                                                                                ;
+; db/altsyncram_rqd1.tdf                                                                                                                ;
+; db/altsyncram_s0g1.tdf                                                                                                                ;
+; db/altsyncram_sgg1.tdf                                                                                                                ;
+; db/altsyncram_t072.tdf                                                                                                                ;
+; db/altsyncram_vc81.tdf                                                                                                                ;
+; db/cmpr_2o8.tdf                                                                                                                       ;
+; db/cmpr_2qh.tdf                                                                                                                       ;
+; db/cmpr_3o8.tdf                                                                                                                       ;
+; db/cmpr_6cc.tdf                                                                                                                       ;
+; db/cmpr_7cc.tdf                                                                                                                       ;
+; db/cmpr_8cc.tdf                                                                                                                       ;
+; db/cmpr_9cc.tdf                                                                                                                       ;
+; db/cmpr_ghh.tdf                                                                                                                       ;
+; db/cmpr_ioh.tdf                                                                                                                       ;
+; db/cmpr_joh.tdf                                                                                                                       ;
+; db/cmpr_koh.tdf                                                                                                                       ;
+; db/cmpr_lhh.tdf                                                                                                                       ;
+; db/cmpr_lmh.tdf                                                                                                                       ;
+; db/cmpr_noh.tdf                                                                                                                       ;
+; db/cntr_06h.tdf                                                                                                                       ;
+; db/cntr_16h.tdf                                                                                                                       ;
+; db/cntr_36h.tdf                                                                                                                       ;
+; db/cntr_46h.tdf                                                                                                                       ;
+; db/cntr_4mf.tdf                                                                                                                       ;
+; db/cntr_56h.tdf                                                                                                                       ;
+; db/cntr_6mf.tdf                                                                                                                       ;
+; db/cntr_74h.tdf                                                                                                                       ;
+; db/cntr_7mf.tdf                                                                                                                       ;
+; db/cntr_8mf.tdf                                                                                                                       ;
+; db/cntr_9mf.tdf                                                                                                                       ;
+; db/cntr_amf.tdf                                                                                                                       ;
+; db/cntr_bmf.tdf                                                                                                                       ;
+; db/cntr_c4h.tdf                                                                                                                       ;
+; db/cntr_d5b.tdf                                                                                                                       ;
+; db/cntr_dmf.tdf                                                                                                                       ;
+; db/cntr_e4h.tdf                                                                                                                       ;
+; db/cntr_e5b.tdf                                                                                                                       ;
+; db/cntr_emf.tdf                                                                                                                       ;
+; db/cntr_f5b.tdf                                                                                                                       ;
+; db/cntr_fjb.tdf                                                                                                                       ;
+; db/cntr_fmf.tdf                                                                                                                       ;
+; db/cntr_h4h.tdf                                                                                                                       ;
+; db/cntr_kkf.tdf                                                                                                                       ;
+; db/cntr_lkf.tdf                                                                                                                       ;
+; db/cntr_okf.tdf                                                                                                                       ;
+; db/cntr_q57.tdf                                                                                                                       ;
+; db/cntr_q5h.tdf                                                                                                                       ;
+; db/cntr_qkf.tdf                                                                                                                       ;
+; db/cntr_r57.tdf                                                                                                                       ;
+; db/cntr_rj7.tdf                                                                                                                       ;
+; db/cntr_s5h.tdf                                                                                                                       ;
+; db/cntr_t5h.tdf                                                                                                                       ;
+; db/cntr_u5h.tdf                                                                                                                       ;
+; db/cntr_v5h.tdf                                                                                                                       ;
+; db/decode_1oa.tdf                                                                                                                     ;
+; db/ded_mult_2o81.tdf                                                                                                                  ;
+; db/dffpipe_93c.tdf                                                                                                                    ;
+; db/dpram_5h21.tdf                                                                                                                     ;
+; db/mac_mult_jng1.tdf                                                                                                                  ;
+; db/mac_mult_n3h1.tdf                                                                                                                  ;
+; db/mac_out_cn82.tdf                                                                                                                   ;
+; db/mac_out_dn82.tdf                                                                                                                   ;
+; db/mult_50t.tdf                                                                                                                       ;
+; db/mult_5ft.tdf                                                                                                                       ;
+; db/mult_add_4cr2.tdf                                                                                                                  ;
+; db/mult_add_6cr2.tdf                                                                                                                  ;
+; db/mult_bjl.tdf                                                                                                                       ;
+; db/mult_h1t.tdf                                                                                                                       ;
+; db/mult_hao.tdf                                                                                                                       ;
+; db/mult_j1t.tdf                                                                                                                       ;
+; db/mult_l1t.tdf                                                                                                                       ;
+; db/mult_o5t.tdf                                                                                                                       ;
+; db/mux_05e.tdf                                                                                                                        ;
+; db/mux_aib.tdf                                                                                                                        ;
+; db/mux_c6e.tdf                                                                                                                        ;
+; db/mux_hib.tdf                                                                                                                        ;
+; db/mux_u4e.tdf                                                                                                                        ;
+; db/scfifo_1n21.tdf                                                                                                                    ;
+; db/scfifo_50a1.tdf                                                                                                                    ;
+; db/scfifo_tr31.tdf                                                                                                                    ;
+; db/shift_taps_41n.tdf                                                                                                                 ;
+; db/shift_taps_51n.tdf                                                                                                                 ;
+; db/shift_taps_61n.tdf                                                                                                                 ;
+; db/shift_taps_71n.tdf                                                                                                                 ;
+; db/shift_taps_81n.tdf                                                                                                                 ;
+; db/shift_taps_91n.tdf                                                                                                                 ;
+; db/shift_taps_a1n.tdf                                                                                                                 ;
+; db/shift_taps_b1n.tdf                                                                                                                 ;
+; db/shift_taps_c1n.tdf                                                                                                                 ;
+; db/shift_taps_d1n.tdf                                                                                                                 ;
+; db/shift_taps_f1n.tdf                                                                                                                 ;
+; db/shift_taps_j1n.tdf                                                                                                                 ;
+; db/shift_taps_rvm.tdf                                                                                                                 ;
+; db/shift_taps_tvm.tdf                                                                                                                 ;
+; ddr_lib_path.tcl                                                                                                                      ;
+; ddr_sdram_component_classic_0.cmp                                                                                                     ;
+; ddr_sdram_component_classic_0.html                                                                                                    ;
+; ddr_sdram_component_classic_0.qip                                                                                                     ;
+; ddr_sdram_component_classic_0.vhd                                                                                                     ;
+; ddr_sdram_component_classic_0_auk_ddr_clk_gen.vhd                                                                                     ;
+; ddr_sdram_component_classic_0_auk_ddr_datapath.vhd                                                                                    ;
+; ddr_sdram_component_classic_0_auk_ddr_dqs_group.vhd                                                                                   ;
+; ddr_sdram_component_classic_0_auk_ddr_sdram.vhd                                                                                       ;
+; ddr_sdram_component_classic_0_ddr_settings.txt                                                                                        ;
+; ddr_sdram_component_classic_0_pre_compile_ddr_timing_summary.txt                                                                      ;
+; ddr_sdram_controller-library/auk_ddr2_init.ocp                                                                                        ;
+; ddr_sdram_controller-library/auk_ddr2_init.vhd                                                                                        ;
+; ddr_sdram_controller-library/auk_ddr_avalon_if.vhd                                                                                    ;
+; ddr_sdram_controller-library/auk_ddr_bank_details.vhd                                                                                 ;
+; ddr_sdram_controller-library/auk_ddr_controller.vhd                                                                                   ;
+; ddr_sdram_controller-library/auk_ddr_functions.vhd                                                                                    ;
+; ddr_sdram_controller-library/auk_ddr_init.ocp                                                                                         ;
+; ddr_sdram_controller-library/auk_ddr_init.vhd                                                                                         ;
+; ddr_sdram_controller-library/auk_ddr_input_buf.vhd                                                                                    ;
+; ddr_sdram_controller-library/auk_ddr_tb_functions.vhd                                                                                 ;
+; ddr_sdram_controller-library/auk_ddr_timers.vhd                                                                                       ;
+; ddr_sdram_controller-library/example_lfsr8.v                                                                                          ;
+; ddr_sdram_controller-library/example_lfsr8.vhd                                                                                        ;
+; jtag_uart.vhd                                                                                                                         ;
+; megafunctions/a_dpfifo.inc                                                                                                            ;
+; megafunctions/a_f2fifo.inc                                                                                                            ;
+; megafunctions/a_fffifo.inc                                                                                                            ;
+; megafunctions/a_i2fifo.inc                                                                                                            ;
+; megafunctions/a_rdenreg.inc                                                                                                           ;
+; megafunctions/a_regfifo.inc                                                                                                           ;
+; megafunctions/addcore.inc                                                                                                             ;
+; megafunctions/aglobal91.inc                                                                                                           ;
+; megafunctions/alt_ded_mult.inc                                                                                                        ;
+; megafunctions/alt_ded_mult_y.inc                                                                                                      ;
+; megafunctions/alt_jtag_atlantic.v                                                                                                     ;
+; megafunctions/alt_mac_mult.tdf                                                                                                        ;
+; megafunctions/alt_mac_out.tdf                                                                                                         ;
+; megafunctions/alt_stratix_add_sub.inc                                                                                                 ;
+; megafunctions/alt_zaccum.inc                                                                                                          ;
+; megafunctions/altdpram.inc                                                                                                            ;
+; megafunctions/altera_std_synchronizer.v                                                                                               ;
+; megafunctions/altmult_add.tdf                                                                                                         ;
+; megafunctions/altpll.tdf                                                                                                              ;
+; megafunctions/altqpram.inc                                                                                                            ;
+; megafunctions/altram.inc                                                                                                              ;
+; megafunctions/altrom.inc                                                                                                              ;
+; megafunctions/altshift.inc                                                                                                            ;
+; megafunctions/altshift.tdf                                                                                                            ;
+; megafunctions/altshift_taps.tdf                                                                                                       ;
+; megafunctions/altsyncram.tdf                                                                                                          ;
+; megafunctions/bypassff.inc                                                                                                            ;
+; megafunctions/cbx.lst                                                                                                                 ;
+; megafunctions/comptree.inc                                                                                                            ;
+; megafunctions/csa_add.inc                                                                                                             ;
+; megafunctions/cycloneii_pll.inc                                                                                                       ;
+; megafunctions/dffpipe.inc                                                                                                             ;
+; megafunctions/look_add.inc                                                                                                            ;
+; megafunctions/lpm_add_sub.inc                                                                                                         ;
+; megafunctions/lpm_add_sub.tdf                                                                                                         ;
+; megafunctions/lpm_compare.inc                                                                                                         ;
+; megafunctions/lpm_compare.tdf                                                                                                         ;
+; megafunctions/lpm_constant.inc                                                                                                        ;
+; megafunctions/lpm_counter.inc                                                                                                         ;
+; megafunctions/lpm_decode.inc                                                                                                          ;
+; megafunctions/lpm_mult.inc                                                                                                            ;
+; megafunctions/lpm_mult.tdf                                                                                                            ;
+; megafunctions/lpm_mux.inc                                                                                                             ;
+; megafunctions/lpm_mux.tdf                                                                                                             ;
+; megafunctions/mpar_add.inc                                                                                                            ;
+; megafunctions/mpar_add.tdf                                                                                                            ;
+; megafunctions/mul_boothc.inc                                                                                                          ;
+; megafunctions/mul_lfrg.inc                                                                                                            ;
+; megafunctions/muleabz.inc                                                                                                             ;
+; megafunctions/multcore.inc                                                                                                            ;
+; megafunctions/multcore.tdf                                                                                                            ;
+; megafunctions/muxlut.inc                                                                                                              ;
+; megafunctions/pzdyqx.vhd                                                                                                              ;
+; megafunctions/scfifo.tdf                                                                                                              ;
+; megafunctions/sld_hub.vhd                                                                                                             ;
+; megafunctions/sld_rom_sr.vhd                                                                                                          ;
+; megafunctions/sld_virtual_jtag_basic.v                                                                                                ;
+; megafunctions/stratix_mac_mult.inc                                                                                                    ;
+; megafunctions/stratix_mac_out.inc                                                                                                     ;
+; megafunctions/stratix_pll.inc                                                                                                         ;
+; megafunctions/stratix_ram_block.inc                                                                                                   ;
+; megafunctions/stratixii_pll.inc                                                                                                       ;
+; membuffer_0.vhd                                                                                                                       ;
+; octaver_filter_1.vhd                                                                                                                  ;
+; pio_bitcrusher_bypass.vhd                                                                                                             ;
+; pio_bitcrusher_crush.vhd                                                                                                              ;
+; pio_bitcrusher_downsample.vhd                                                                                                         ;
+; pio_bitcrusher_drywet.vhd                                                                                                             ;
+; pio_bitcrusher_flavor.vhd                                                                                                             ;
+; pio_bitcrusher_tone.vhd                                                                                                               ;
+; pio_compressor_bypass.vhd                                                                                                             ;
+; pio_compressor_gain.vhd                                                                                                               ;
+; pio_compressor_treshold.vhd                                                                                                           ;
+; pio_delay_bypass.vhd                                                                                                                  ;
+; pio_delay_decay.vhd                                                                                                                   ;
+; pio_delay_length.vhd                                                                                                                  ;
+; pio_master_volume.vhd                                                                                                                 ;
+; pio_octaver_bypass.vhd                                                                                                                ;
+; pio_octaver_dry_wet.vhd                                                                                                               ;
+; pio_output_power_left.vhd                                                                                                             ;
+; pio_output_power_right.vhd                                                                                                            ;
+; pio_overdrive_asymmetric.vhd                                                                                                          ;
+; pio_overdrive_bypass.vhd                                                                                                              ;
+; pio_overdrive_gain.vhd                                                                                                                ;
+; pio_overdrive_tone.vhd                                                                                                                ;
+; pio_overdrive_volume.vhd                                                                                                              ;
+; pio_tremolo_stereo_bypass.vhd                                                                                                         ;
+; pio_tremolo_stereo_depth.vhd                                                                                                          ;
+; pio_tremolo_stereo_mode.vhd                                                                                                           ;
+; pio_tremolo_stereo_sweep_a.vhd                                                                                                        ;
+; pio_tremolo_stereo_sweep_b.vhd                                                                                                        ;
+; pixel_buffer.v                                                                                                                        ;
+; ps2.v                                                                                                                                 ;
+; sdram.vhd                                                                                                                             ;
+; sram.v                                                                                                                                ;
+; stp1.stp                                                                                                                              ;
+; testbench/ddr_sdram_component_classic_0_debug_design_tb.vhd                                                                           ;
+; verify_timing_for_ddr_sdram_component_classic_0.tcl                                                                                   ;
+; vga.v                                                                                                                                 ;
+; altera/91sp2/ip/University_Program/Memory/altera_up_flash_memory/hdl/Altera_UP_Flash_Memory_Controller.vhd                            ;
+; altera/91sp2/ip/University_Program/Memory/altera_up_flash_memory/hdl/Altera_UP_Flash_Memory_IP_Core_Avalon_Interface.vhd              ;
+; altera/91sp2/ip/University_Program/Memory/altera_up_flash_memory/hdl/Altera_UP_Flash_Memory_IP_Core_Standalone.vhd                    ;
+; altera/91sp2/ip/University_Program/Memory/altera_up_flash_memory/hdl/Altera_UP_Flash_Memory_User_Interface.vhd                        ;
+; altera/91sp2/quartus/libraries/vhdl/ieee/prmtvs_b.vhd                                                                                 ;
+; altera/91sp2/quartus/libraries/vhdl/ieee/prmtvs_p.vhd                                                                                 ;
+; altera/91sp2/quartus/libraries/vhdl/ieee/timing_b.vhd                                                                                 ;
+; altera/91sp2/quartus/libraries/vhdl/ieee/timing_p.vhd                                                                                 ;
++---------------------------------------------------------------------------------------------------------------------------------------+
+
+
++---------------------------------------------------------------------------------------------------------------------------------------+
+; Files Not Restored                                                                                                                    ;
++---------------------------------------------------------------------------------------------------------------------------------------+
+; File Name                                                                                                                             ;
++---------------------------------------------------------------------------------------------------------------------------------------+
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_alpha_blending/Altera_UP_Avalon_Alpha_Blending_hw.tcl       ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_alpha_blending/UP_IP_Generator.tcl                          ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_character_buffer/Altera_UP_Avalon_Character_Buffer_hw.tcl   ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_character_buffer/Altera_UP_Avalon_Character_Buffer_sw.tcl   ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_character_buffer/UP_IP_Generator.tcl                        ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_pixel_buffer/Altera_UP_Avalon_Pixel_Buffer_hw.tcl           ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_pixel_buffer/Altera_UP_Avalon_Pixel_Buffer_sw.tcl           ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_pixel_buffer/UP_IP_Generator.tcl                            ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_vga/Altera_UP_Avalon_VGA_hw.tcl                             ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_vga/UP_IP_Generator.tcl                                     ;
+; altera/91sp2/ip/University_Program/Audio_Video/altera_up_avalon_audio_and_video_config/Altera_UP_Avalon_Audio_and_Video_Config_hw.tcl ;
+; altera/91sp2/ip/University_Program/Audio_Video/altera_up_avalon_audio_and_video_config/Altera_UP_Avalon_Audio_and_Video_Config_sw.tcl ;
+; altera/91sp2/ip/University_Program/Audio_Video/altera_up_avalon_audio_and_video_config/UP_IP_Generator.tcl                            ;
+; altera/91sp2/ip/University_Program/Input_Output/altera_up_avalon_ps2/Altera_UP_Avalon_PS2_hw.tcl                                      ;
+; altera/91sp2/ip/University_Program/Input_Output/altera_up_avalon_ps2/Altera_UP_Avalon_PS2_sw.tcl                                      ;
+; altera/91sp2/ip/University_Program/Input_Output/altera_up_avalon_ps2/UP_IP_Generator.tcl                                              ;
+; altera/91sp2/ip/University_Program/Memory/altera_up_avalon_sram/Altera_UP_Avalon_SRAM_hw.tcl                                          ;
+; altera/91sp2/ip/University_Program/Memory/altera_up_avalon_sram/UP_IP_Generator.tcl                                                   ;
+; altera/91sp2/ip/University_Program/Memory/altera_up_flash_memory/Altera_UP_Flash_Memory_IP_Core_Avalon_Interface_hw.tcl               ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_alpha_blending/Altera_UP_Avalon_Alpha_Blending_hw.tcl       ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_character_buffer/Altera_UP_Avalon_Character_Buffer_hw.tcl   ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_pixel_buffer/Altera_UP_Avalon_Pixel_Buffer_hw.tcl           ;
+; altera/91sp2/ip/University_Program/Audio_Video/Video_Out/altera_up_avalon_vga/Altera_UP_Avalon_VGA_hw.tcl                             ;
+; altera/91sp2/ip/University_Program/Audio_Video/altera_up_avalon_audio_and_video_config/Altera_UP_Avalon_Audio_and_Video_Config_hw.tcl ;
+; altera/91sp2/ip/University_Program/Input_Output/altera_up_avalon_ps2/Altera_UP_Avalon_PS2_hw.tcl                                      ;
+; altera/91sp2/ip/University_Program/Memory/altera_up_avalon_sram/Altera_UP_Avalon_SRAM_hw.tcl                                          ;
+; altera/91sp2/ip/University_Program/Memory/altera_up_flash_memory/Altera_UP_Flash_Memory_IP_Core_Avalon_Interface_hw.tcl               ;
+; altera/91sp2/ip/University_Program/Memory/altera_up_flash_memory/hdl/Altera_UP_Flash_Memory_Controller.vhd                            ;
+; altera/91sp2/ip/University_Program/Memory/altera_up_flash_memory/hdl/Altera_UP_Flash_Memory_IP_Core_Avalon_Interface.vhd              ;
+; altera/91sp2/ip/University_Program/Memory/altera_up_flash_memory/hdl/Altera_UP_Flash_Memory_IP_Core_Standalone.vhd                    ;
+; altera/91sp2/ip/University_Program/Memory/altera_up_flash_memory/hdl/Altera_UP_Flash_Memory_User_Interface.vhd                        ;
++---------------------------------------------------------------------------------------------------------------------------------------+
+
+
